@@ -1,3 +1,6 @@
+# Diagrama de classes
+
+```mermaid
 classDiagram
     class Usuario
     class Departamento
@@ -89,3 +92,4 @@ classDiagram
 
     Departamento "1" -- "0..*" Setores : associado
     Setores "1" -- "0..*" Setores : subSetor
+```
