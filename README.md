@@ -1,7 +1,8 @@
 # Diagrama Entidade-Relacionamento
 
-```dbml
-    USUARIO {
+```mermaid
+    erDiagram
+        USUARIO {
         int id
         string nome
         string matricula
@@ -40,6 +41,13 @@
         datetime data_fim
         datetime data_criacao
         int fk_risco
+        int fk_usuario
+    }
+
+    SETORES {
+        int id
+        string nome
+        int fk_departamento
     }
 
     %% RELACIONAMENTOS
@@ -47,6 +55,8 @@
     USUARIO ||--o{ RISCO : cria
     DEPARTAMENTO ||--o{ RISCO : associado
     RISCO ||--o{ TRATAMENTO : possui
+    DEPARTAMENTO ||--o{ SETORES : associado
+    SETORES ||--o{ SETORES : subSetor
 ```
 
 
