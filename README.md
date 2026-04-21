@@ -116,7 +116,7 @@ Adicione aqui entradas numa lista com a documentação pertinente:
 
 # Diagrama de caso de uso
 
-
+![Diagrama de Caso de Uso](imagens/Diagrama_caso_de_uso.jpeg)
 
 # Diagrama de classes
 
