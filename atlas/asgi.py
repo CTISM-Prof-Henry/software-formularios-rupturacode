@@ -1,5 +1,5 @@
 """
-ASGI config for gestao_de_risco_ufsm project.
+ASGI config for atlas project.
 
 It exposes the ASGI callable as a module-level variable named ``application``.
 
@@ -11,6 +11,6 @@ import os
 
 from django.core.asgi import get_asgi_application
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'gestao_de_risco_ufsm.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'atlas.settings')
 
 application = get_asgi_application()
