@@ -9,7 +9,7 @@ def criar_tratamento(request):
         form = TratamentoForm(request.POST)
         if form.is_valid():
             form.save()
-            return render(request, "sucesso.html")
+            return render(request, "sucesso_tratamento.html")
     else:
         form = TratamentoForm()
 
@@ -27,7 +27,7 @@ def editar_tratamento(request, pk):
         form = TratamentoForm(request.POST, instance=tratamento)
         if form.is_valid():
             form.save()
-            return render(request, "sucesso.html")
+            return render(request, "sucesso_tratamento.html")
     else:
         form = TratamentoForm(instance=tratamento)
 
@@ -38,14 +38,14 @@ def desativar_tratamento(request, pk):
     tratamento = Tratamento.objects.get(pk=pk)
     tratamento.situacao = "Desativado"
     tratamento.save()
-    return render(request, "sucesso.html")
+    return render(request, "sucesso_tratamento.html")
 
 
 def ativar_tratamento(request, pk):
     tratamento = Tratamento.objects.get(pk=pk)
     tratamento.situacao = "Ativo"
     tratamento.save()
-    return render(request, "sucesso.html")
+    return render(request, "sucesso_tratamento.html")
 
 
 def detalhes_tratamento(request, pk):

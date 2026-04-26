@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Subunidades | Atlas{% endblock %}
+
+{% block content %}
+    <h1>Subunidades</h1>
+
+    {% if subunidades %}
+        <ul>
+            {% for subunidade in subunidades %}
+                <li>
+                    <a href="{% url 'detalhes_subunidade' subunidade.id %}">
+                        {{ subunidade.nome }}
+                    </a>
+                    - {{ subunidade.sigla }}
+                    ({% if subunidade.ativo %}Ativa{% else %}Inativa{% endif %})
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhuma subunidade encontrada.</p>
+    {% endif %}
+
+    <div class="actions">
+        <a class="button" href="{% url 'criar_subunidade' %}">Cadastrar subunidade</a>
+    </div>
+{% endblock %}

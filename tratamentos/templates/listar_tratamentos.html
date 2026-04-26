@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+
+{% block title %}Tratamentos | Atlas{% endblock %}
+
+{% block content %}
+    <h1>Tratamentos</h1>
+
+    {% if tratamentos %}
+        <ul>
+            {% for tratamento in tratamentos %}
+                <li>
+                    <a href="{% url 'detalhes_tratamento' tratamento.id %}">
+                        {{ tratamento.resposta }}
+                    </a>
+                    - {{ tratamento.situacao }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum tratamento encontrado.</p>
+    {% endif %}
+
+    <div class="actions">
+        <a class="button" href="{% url 'criar_tratamento' %}">Cadastrar tratamento</a>
+    </div>
+{% endblock %}

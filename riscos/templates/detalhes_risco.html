@@ -1,25 +1,23 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Detalhes do Risco</title>
-</head>
-<body>
-    <main>
-        <h1>Detalhes do Risco: {{ risco.nome }}</h1>
-        <p><strong>Descrição:</strong> {{ risco.descricao }}</p>
-        <p><strong>Probabilidade:</strong> {{ risco.probabilidade }}</p>
-        <p><strong>Impacto:</strong> {{ risco.impacto }}</p>
-        <p><strong>Status:</strong> {{ risco.status }}</p>
+{% extends "base.html" %}
 
-        <nav aria-label="Ações para o risco">
-            <a href="{% url 'editar_risco' risco.id %}">Editar Risco</a>
-            {% if risco.status == 'Ativo' %}
-                <a href="{% url 'desativar_risco' risco.id %}">Desativar Risco</a>
-            {% endif %}
-            <a href="{% url 'listar_riscos' %}">Voltar para a lista de riscos</a>
-        </nav>
-    </main>
-</body>
-</html>
+{% block title %}Detalhes do risco | Atlas{% endblock %}
+
+{% block content %}
+    <h1>Detalhes do risco: {{ risco.nome }}</h1>
+
+    <p><strong>Descri&ccedil;&atilde;o:</strong> {{ risco.descricao }}</p>
+    <p><strong>Probabilidade:</strong> {{ risco.probabilidade }}</p>
+    <p><strong>Impacto:</strong> {{ risco.impacto }}</p>
+    <p><strong>N&iacute;vel de risco:</strong> {{ risco.nivel_de_risco }}</p>
+    <p><strong>Status:</strong> {% if risco.ativo %}Ativo{% else %}Inativo{% endif %}</p>
+
+    <div class="actions" aria-label="A&ccedil;&otilde;es para o risco">
+        <a href="{% url 'editar_risco' risco.id %}">Editar risco</a>
+        {% if risco.ativo %}
+            <a href="{% url 'desativar_risco' risco.id %}">Desativar risco</a>
+        {% else %}
+            <a href="{% url 'ativar_risco' risco.id %}">Ativar risco</a>
+        {% endif %}
+        <a href="{% url 'listar_riscos' %}">Voltar para a lista de riscos</a>
+    </div>
+{% endblock %}

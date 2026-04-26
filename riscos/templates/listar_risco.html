@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+
+{% block title %}Riscos | Atlas{% endblock %}
+
+{% block content %}
+    <h1>Riscos</h1>
+
+    {% if riscos %}
+        <ul>
+            {% for risco in riscos %}
+                <li>
+                    <a href="{% url 'detalhes_risco' risco.id %}">{{ risco.nome }}</a>
+                    - {{ risco.nivel_de_risco }}
+                </li>
+            {% endfor %}
+        </ul>
+    {% else %}
+        <p>Nenhum risco encontrado.</p>
+    {% endif %}
+
+    <div class="actions">
+        <a class="button" href="{% url 'criar_risco' %}">Cadastrar risco</a>
+    </div>
+{% endblock %}

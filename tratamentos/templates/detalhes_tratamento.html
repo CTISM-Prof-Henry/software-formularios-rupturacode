@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes do tratamento | Atlas{% endblock %}
+
+{% block content %}
+    <h1>Detalhes do tratamento</h1>
+
+    <p><strong>Resposta:</strong> {{ tratamento.resposta }}</p>
+    <p><strong>A&ccedil;&atilde;o:</strong> {{ tratamento.acao }}</p>
+    <p><strong>Data de in&iacute;cio:</strong> {{ tratamento.data_inicio }}</p>
+    <p><strong>Data de fim:</strong> {{ tratamento.data_fim }}</p>
+    <p><strong>Situa&ccedil;&atilde;o:</strong> {{ tratamento.situacao }}</p>
+
+    <div class="actions">
+        <a href="{% url 'editar_tratamento' tratamento.id %}">Editar tratamento</a>
+        <a href="{% url 'desativar_tratamento' tratamento.id %}">Desativar tratamento</a>
+        <a href="{% url 'ativar_tratamento' tratamento.id %}">Ativar tratamento</a>
+        <a href="{% url 'listar_tratamentos' %}">Voltar para tratamentos</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Atlas - Gest&atilde;o de Riscos{% endblock %}</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            min-height: 100vh;
+            margin: 0;
+            color: #1f2933;
+            background: #f5f9fc;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        a {
+            color: #004f86;
+            font-weight: 700;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .site-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 24px;
+            padding: 18px 32px;
+            border-bottom: 1px solid #d8e2ec;
+            background: #ffffff;
+        }
+
+        .brand {
+            color: #003d68;
+            font-size: 1.25rem;
+            font-weight: 800;
+        }
+
+        .nav {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 18px;
+        }
+
+        .page {
+            width: min(1040px, calc(100% - 32px));
+            margin: 0 auto;
+            padding: 36px 0;
+        }
+
+        .card {
+            border-radius: 8px;
+            background: #ffffff;
+            box-shadow: 0 16px 40px rgba(21, 43, 64, 0.08);
+            padding: 28px;
+        }
+
+        h1 {
+            margin: 0 0 22px;
+            color: #17202a;
+            font-size: 2rem;
+        }
+
+        button,
+        .button {
+            display: inline-flex;
+            min-height: 38px;
+            align-items: center;
+            justify-content: center;
+            margin-top: 8px;
+            padding: 0 16px;
+            border: 0;
+            border-radius: 4px;
+            color: #ffffff;
+            background: #004f86;
+            font: inherit;
+            font-weight: 700;
+            cursor: pointer;
+        }
+
+        form p {
+            display: grid;
+            gap: 6px;
+            margin: 0 0 16px;
+        }
+
+        input,
+        select,
+        textarea {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #cbd6e2;
+            border-radius: 4px;
+            font: inherit;
+        }
+
+        .actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 14px;
+            margin-top: 20px;
+        }
+
+        @media (max-width: 700px) {
+            .site-header {
+                align-items: flex-start;
+                flex-direction: column;
+                padding: 16px;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="{% url 'dashboard' %}">Atlas</a>
+        <nav class="nav" aria-label="Navega&ccedil;&atilde;o principal">
+            <a href="{% url 'dashboard' %}">Dashboard</a>
+            <a href="{% url 'listar_riscos' %}">Riscos</a>
+            <a href="{% url 'listar_tratamentos' %}">Tratamentos</a>
+            <a href="{% url 'listar_subunidades' %}">Subunidades</a>
+            <a href="{% url 'criar_risco' %}">Novo risco</a>
+        </nav>
+    </header>
+
+    <main class="page">
+        <section class="card">
+            {% block content %}{% endblock %}
+        </section>
+    </main>
+</body>
+</html>

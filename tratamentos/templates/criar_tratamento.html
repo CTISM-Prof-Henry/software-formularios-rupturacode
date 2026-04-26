@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 
-{% block title %}Editar risco | Atlas{% endblock %}
+{% block title %}Novo tratamento | Atlas{% endblock %}
 
 {% block content %}
-    <h1>Editar risco</h1>
+    <h1>Novo tratamento</h1>
 
     <form method="post">
         {% csrf_token %}
@@ -12,6 +12,6 @@
     </form>
 
     <div class="actions">
-        <a href="{% url 'listar_riscos' %}">Voltar para a lista de riscos</a>
+        <a href="{% url 'listar_tratamentos' %}">Voltar para tratamentos</a>
     </div>
 {% endblock %}

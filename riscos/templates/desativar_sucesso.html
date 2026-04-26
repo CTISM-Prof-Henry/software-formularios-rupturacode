@@ -1,19 +1,13 @@
-<!DOCTYPE html>
-<html lang="pt-br">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Risco desativado</title>
-</head>
-<body>
-    <main>
-        <h1>Risco desativado com sucesso</h1>
-        <p>O risco foi marcado como inativo e não aparecerá mais como um risco ativo.</p>
+{% extends "base.html" %}
 
-        <nav aria-label="Ações após desativar risco">
-            <a href="{% url 'listar_riscos' %}">Voltar para a lista de riscos</a>
-            <a href="{% url 'criar_risco' %}">Cadastrar novo risco</a>
-        </nav>
-    </main>
-</body>
-</html>
+{% block title %}Risco desativado | Atlas{% endblock %}
+
+{% block content %}
+    <h1>Risco desativado com sucesso</h1>
+    <p>O risco foi marcado como inativo e n&atilde;o aparecer&aacute; mais como risco ativo.</p>
+
+    <div class="actions">
+        <a href="{% url 'listar_riscos' %}">Voltar para a lista de riscos</a>
+        <a href="{% url 'criar_risco' %}">Cadastrar novo risco</a>
+    </div>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% extends "base.html" %}
+
+{% block title %}Detalhes da subunidade | Atlas{% endblock %}
+
+{% block content %}
+    <h1>Detalhes da subunidade: {{ subunidade.nome }}</h1>
+
+    <p><strong>Sigla:</strong> {{ subunidade.sigla }}</p>
+    <p><strong>Descri&ccedil;&atilde;o:</strong> {{ subunidade.descricao }}</p>
+    <p><strong>Status:</strong> {% if subunidade.ativo %}Ativa{% else %}Inativa{% endif %}</p>
+
+    <div class="actions">
+        <a href="{% url 'editar_subunidade' subunidade.id %}">Editar subunidade</a>
+        {% if subunidade.ativo %}
+            <a href="{% url 'desativar_subunidade' subunidade.id %}">Desativar subunidade</a>
+        {% else %}
+            <a href="{% url 'ativar_subunidade' subunidade.id %}">Ativar subunidade</a>
+        {% endif %}
+        <a href="{% url 'listar_subunidades' %}">Voltar para subunidades</a>
+    </div>
+{% endblock %}
