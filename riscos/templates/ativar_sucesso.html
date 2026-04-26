@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Risco desativado</title>
+    <title>Risco ativado</title>
 </head>
 <body>
     <main>
-        <h1>Risco desativado com sucesso</h1>
-        <p>O risco foi marcado como inativo e não aparecerá mais como um risco ativo.</p>
+        <h1>Risco ativado com sucesso</h1>
+        <p>O risco foi marcado como ativo e voltou a fazer parte da lista de riscos em acompanhamento.</p>
 
-        <nav aria-label="Ações após desativar risco">
+        <nav aria-label="Ações após ativar risco">
             <a href="{% url 'listar_riscos' %}">Voltar para a lista de riscos</a>
             <a href="{% url 'criar_risco' %}">Cadastrar novo risco</a>
         </nav>

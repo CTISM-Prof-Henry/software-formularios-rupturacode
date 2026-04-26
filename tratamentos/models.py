@@ -12,5 +12,5 @@ class Tratamento(models.Model):
     data_criacao = models.DateTimeField(auto_now_add=True)
     data_atualizacao = models.DateTimeField(auto_now=True)
     situacao = models.CharField(max_length=50)
-    usuario_responsavel = models.ForeignKey("usuarios.User", on_delete=models.CASCADE)
+    usuario_responsavel = models.ForeignKey("usuario.Usuario", on_delete=models.CASCADE)
     risco = models.ForeignKey("riscos.Risco", on_delete=models.CASCADE)

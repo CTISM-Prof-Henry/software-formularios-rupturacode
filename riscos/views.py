@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from .models import Risco
 from .forms import RiscoForm
 
@@ -18,18 +18,25 @@ def criar_risco(request):
 
 def listar_riscos(request):
     riscos = Risco.objects.all()
-    return render(request, "listar_riscos.html", {"riscos": riscos})
+    return render(request, "listar_risco.html", {"riscos": riscos})
 
 
 def desativar_risco(request, risco_id):
-    risco = Risco.objects.get(id=risco_id)
+    risco = get_object_or_404(Risco, id=risco_id)
     risco.ativo = False
     risco.save()
     return render(request, "desativar_sucesso.html")
 
 
+def ativar_risco(request, risco_id):
+    risco = get_object_or_404(Risco, id=risco_id)
+    risco.ativo = True
+    risco.save()
+    return render(request, "ativar_sucesso.html")
+
+
 def editar_risco(request, risco_id):
-    risco = Risco.objects.get(id=risco_id)
+    risco = get_object_or_404(Risco, id=risco_id)
     if request.method == "POST":
         form = RiscoForm(request.POST, instance=risco)
         if form.is_valid():
@@ -42,5 +49,5 @@ def editar_risco(request, risco_id):
 
 
 def detalhes_risco(request, risco_id):
-    risco = Risco.objects.get(id=risco_id)
+    risco = get_object_or_404(Risco, id=risco_id)
     return render(request, "detalhes_risco.html", {"risco": risco})

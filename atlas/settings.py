@@ -39,8 +39,9 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "riscos",
     "tratamentos",
-    "usuarios",
-    "subunidades",
+    "usuario",
+    "subunidade",
+    "core",
 ]
 
 MIDDLEWARE = [
