@@ -1,61 +1,94 @@
+from django.core.exceptions import ValidationError
 from django.test import TestCase
-from .views import criar_risco
+from .models import Risco
 
 
-# Create your tests here.
-def test_criar_risco():
-    # Simula uma requisição POST para criar um novo risco
-    response = criar_risco(
-        {
-            "method": "POST",
-            "POST": {
-                "nome": "Risco de Teste",
-                "descricao": "Descrição do risco de teste",
-                "probabilidade": 0.5,
-                "impacto": 0.5,
-            },
-        }
-    )
+class RiscoTests(TestCase):
 
-    # Verifica se a resposta é um redirecionamento para a página de sucesso
-    assert response.status_code == 200
-    assert "sucesso.html" in response.template_name
+    # Test criar risco
+    def test_criar_risco_valido(self):
+        risco = Risco.objects.create(
+            nome="Risco de Teste",
+            descricao="Descrição do risco de teste",
+        )
+        self.assertEqual(risco.nome, "Risco de Teste")
+        self.assertEqual(risco.descricao, "Descrição do risco de teste")
+        self.assertTrue(risco.ativo)
+        
+    def test_criar_risco_invalido(self):
+        with self.assertRaises(ValidationError):
+            Risco.objects.create(
+                nome="",
+                descricao="Descrição do risco sem nome",
+            ).full_clean()
+            
+    # Test editar risco
+    def test_editar_risco_valido(self):
+        risco = Risco.objects.create(
+            nome="Risco para Editar",
+            descricao="Descrição do risco para editar",
+        )
 
+        risco.nome = "Risco Editado"
+        risco.descricao = "Descrição do risco editado"
+        risco.save()
 
-def test_criar_risco_com_dados_invalidos():
-    # Simula uma requisição POST com dados inválidos (probabilidade fora do intervalo)
-    response = criar_risco(
-        {
-            "method": "POST",
-            "POST": {
-                "nome": "Risco de Teste",
-                "descricao": "Descrição do risco de teste",
-                "probabilidade": 1.5,  # Valor inválido
-                "impacto": 0.5,
-            },
-        }
-    )
+        risco.refresh_from_db()
+        self.assertEqual(risco.nome, "Risco Editado")
+        self.assertEqual(risco.descricao, "Descrição do risco editado")
+    
+    def test_editar_risco_invalido(self):
+        risco = Risco.objects.create(
+            nome="Risco para Editar",
+            descricao="Descrição do risco para editar",
+        )
 
-    # Verifica se a resposta contém erros de validação
-    assert response.status_code == 200
-    assert "form" in response.context
-    assert response.context["form"].errors
+        risco.nome = ""
 
+        with self.assertRaises(ValidationError):
+            risco.full_clean()
+            
+    # Test desativar risco
+    def test_desativar_risco_valido(self):
+        risco = Risco.objects.create(
+            nome="Risco para Desativar",
+            descricao="Descrição do risco para desativar",
+        )
 
-def test_criar_risco_com_dados_faltando():
-    # Simula uma requisição POST com dados faltando (nome)
-    response = criar_risco(
-        {
-            "method": "POST",
-            "POST": {
-                "descricao": "Descrição do risco de teste",
-                "probabilidade": 0.5,
-                "impacto": 0.5,
-            },
-        }
-    )
+        risco.ativo = False
+        risco.save()
 
-    # Verifica se a resposta contém erros de validação
-    assert response.status_code == 200
-    assert "form" in response.context
-    assert response.context["form"].errors
+        risco.refresh_from_db()
+        self.assertFalse(risco.ativo)
+        
+    def test_desativar_risco_invalido(self):
+        risco = Risco.objects.create(
+            nome="Risco para Desativar",
+            descricao="Descrição do risco para desativar",
+        )
+
+        risco.ativo = "invalid_value"
+
+        with self.assertRaises(ValidationError):
+            risco.full_clean()
+    
+    # Test detalhes risco
+    def test_detalhes_risco_valido(self):
+        risco = Risco.objects.create(
+            nome="Risco para Detalhes",
+            descricao="Descrição do risco para detalhes",
+        )
+
+        self.assertEqual(risco.nome, "Risco para Detalhes")
+        self.assertEqual(risco.descricao, "Descrição do risco para detalhes")
+        
+    def test_detalhes_risco_invalido(self):
+        risco = Risco.objects.create(
+            nome="Risco para Detalhes",
+            descricao="Descrição do risco para detalhes",
+        )
+
+        risco.nome = ""
+
+        with self.assertRaises(ValidationError):
+            risco.full_clean()

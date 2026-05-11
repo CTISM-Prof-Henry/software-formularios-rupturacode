@@ -44,10 +44,3 @@ def desativar_subunidade(request, subunidade_id):
     subunidade.ativo = False
     subunidade.save()
     return render(request, "sucesso_subunidade.html")
-
-
-def ativar_subunidade(request, subunidade_id):
-    subunidade = Subunidade.objects.get(id=subunidade_id)
-    subunidade.ativo = True
-    subunidade.save()
-    return render(request, "sucesso_subunidade.html")

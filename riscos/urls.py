@@ -1,7 +1,6 @@
 from django.urls import path
 
 from .views import (
-    ativar_risco,
     criar_risco,
     desativar_risco,
     detalhes_risco,
@@ -15,5 +14,4 @@ urlpatterns = [
     path("risco/<int:risco_id>/", detalhes_risco, name="detalhes_risco"),
     path("risco/<int:risco_id>/editar/", editar_risco, name="editar_risco"),
     path("risco/<int:risco_id>/desativar/", desativar_risco, name="desativar_risco"),
-    path("risco/<int:risco_id>/ativar/", ativar_risco, name="ativar_risco"),
 ]

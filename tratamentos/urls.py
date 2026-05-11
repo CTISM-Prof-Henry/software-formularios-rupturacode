@@ -2,7 +2,6 @@ from django.urls import path
 from .views import (
     criar_tratamento,
     listar_tratamentos,
-    ativar_tratamento,
     desativar_tratamento,
     editar_tratamento,
     detalhes_tratamento,
@@ -20,11 +19,6 @@ urlpatterns = [
         "tratamento/<int:pk>/desativar/",
         desativar_tratamento,
         name="desativar_tratamento",
-    ),
-    path(
-        "tratamento/<int:pk>/ativar/",
-        ativar_tratamento,
-        name="ativar_tratamento",
     ),
     path(
         "tratamento/<int:pk>/",

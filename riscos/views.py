@@ -28,13 +28,6 @@ def desativar_risco(request, risco_id):
     return render(request, "desativar_sucesso.html")
 
 
-def ativar_risco(request, risco_id):
-    risco = get_object_or_404(Risco, id=risco_id)
-    risco.ativo = True
-    risco.save()
-    return render(request, "ativar_sucesso.html")
-
-
 def editar_risco(request, risco_id):
     risco = get_object_or_404(Risco, id=risco_id)
     if request.method == "POST":

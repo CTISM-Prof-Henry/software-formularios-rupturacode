@@ -41,13 +41,6 @@ def desativar_tratamento(request, pk):
     return render(request, "sucesso_tratamento.html")
 
 
-def ativar_tratamento(request, pk):
-    tratamento = Tratamento.objects.get(pk=pk)
-    tratamento.situacao = "Ativo"
-    tratamento.save()
-    return render(request, "sucesso_tratamento.html")
-
-
 def detalhes_tratamento(request, pk):
     tratamento = Tratamento.objects.get(pk=pk)
     return render(request, "detalhes_tratamento.html", {"tratamento": tratamento})
