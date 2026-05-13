@@ -1,7 +1,8 @@
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from .models import Risco
-
+from django.urls import reverse
+from .views import criar_risco, editar_risco, desativar_risco, detalhes_risco
 
 class RiscoTests(TestCase):
 
@@ -22,6 +23,22 @@ class RiscoTests(TestCase):
                 descricao="Descrição do risco sem nome",
             ).full_clean()
             
+    def test_criar_risco_invalido_endpoint(self):
+        url = reverse('criar_risco')
+        response = self.client.post(url, data={
+            "nome": "",
+            "descricao": "Descrição do risco sem nome",
+        })
+        self.assertEqual(response.status_code, 200)
+        
+    def test_criar_risco_valido_endpoint(self):
+        url = reverse('criar_risco')
+        response = self.client.post(url, data={
+            "nome": "Risco de Teste",
+            "descricao": "Descrição do risco de teste",
+        })
+        self.assertEqual(response.status_code, 200)
+
     # Test editar risco
     def test_editar_risco_valido(self):
         risco = Risco.objects.create(
