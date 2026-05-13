@@ -5,7 +5,6 @@ from .views import (
     detalhes_subunidade,
     editar_subunidade,
     desativar_subunidade,
-    ativar_subunidade,
 )
 
 urlpatterns = [
@@ -25,10 +24,5 @@ urlpatterns = [
         "subunidade/<int:subunidade_id>/desativar/",
         desativar_subunidade,
         name="desativar_subunidade",
-    ),
-    path(
-        "subunidade/<int:subunidade_id>/ativar/",
-        ativar_subunidade,
-        name="ativar_subunidade",
     ),
 ]

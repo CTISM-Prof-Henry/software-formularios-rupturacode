@@ -1,90 +1,110 @@
+from datetime import date
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+
+from riscos.models import Risco
+from usuario.models import Usuario
+
 from .models import Tratamento
 
-# Create your tests here.
+
 class TratamentoTests(TestCase):
-    
-    # Test criar tratamento
-    def test_criar_tratamento_valido(self):
-        tratamento = Tratamento.objects.create(
-            nome="Tratamento de Teste",
-            descricao="Descrição do tratamento de teste",
+    def setUp(self):
+        self.usuario = Usuario.objects.create(
+            nome="Usuario Teste",
+            matricula="12345",
+            departamento="Departamento 1",
+            cargo="Analista",
         )
-        self.assertEqual(tratamento.nome, "Tratamento de Teste")
-        self.assertEqual(tratamento.descricao, "Descrição do tratamento de teste")
-        self.assertTrue(tratamento.ativo)
-    
-    def test_criar_tratamento_invalido(self):
-        with self.assertRaises(ValidationError):
-            Tratamento.objects.create(
-                nome="",
-                descricao="Descrição do tratamento sem nome",
-            ).full_clean()
-    
-    # Test editar tratamento
-    def test_editar_tratamento_valido(self):
-        tratamento = Tratamento.objects.create(
-            nome="Tratamento para Editar",
-            descricao="Descrição do tratamento para editar",
+        self.risco = Risco.objects.create(
+            nome="Risco de Teste",
+            descricao="Descricao do risco de teste",
+            tipo="riscos_operacionais",
+            departamento="Departamento 1",
+            impacto="Alto",
+            probabilidade="Media",
+            nivel_de_risco="Alto",
+            eficacia_dos_controles="Media",
+            nivel_residual="Medio",
         )
 
-        tratamento.nome = "Tratamento Editado"
-        tratamento.descricao = "Descrição do tratamento editado"
+    def criar_tratamento(self, **kwargs):
+        dados = {
+            "resposta": "Resposta de teste",
+            "acao": "Acao de teste",
+            "data_inicio": date(2026, 5, 1),
+            "data_fim": date(2026, 5, 30),
+            "situacao": "Ativo",
+            "usuario_responsavel": self.usuario,
+            "risco": self.risco,
+        }
+        dados.update(kwargs)
+        return Tratamento.objects.create(**dados)
+
+    # Test criar tratamento
+    def test_criar_tratamento_valido(self):
+        tratamento = self.criar_tratamento()
+
+        self.assertEqual(tratamento.resposta, "Resposta de teste")
+        self.assertEqual(tratamento.acao, "Acao de teste")
+        self.assertEqual(tratamento.situacao, "Ativo")
+        self.assertEqual(tratamento.usuario_responsavel, self.usuario)
+        self.assertEqual(tratamento.risco, self.risco)
+
+    def test_criar_tratamento_invalido(self):
+        tratamento = self.criar_tratamento(resposta="")
+
+        with self.assertRaises(ValidationError):
+            tratamento.full_clean()
+
+    # Test editar tratamento
+    def test_editar_tratamento_valido(self):
+        tratamento = self.criar_tratamento()
+
+        tratamento.resposta = "Resposta editada"
+        tratamento.acao = "Acao editada"
+        tratamento.situacao = "Em andamento"
         tratamento.save()
 
         tratamento.refresh_from_db()
-        self.assertEqual(tratamento.nome, "Tratamento Editado")
-        self.assertEqual(tratamento.descricao, "Descrição do tratamento editado")
-        
-    def test_editar_tratamento_invalido(self):
-        tratamento = Tratamento.objects.create(
-            nome="Tratamento para Editar",
-            descricao="Descrição do tratamento para editar",
-        )
+        self.assertEqual(tratamento.resposta, "Resposta editada")
+        self.assertEqual(tratamento.acao, "Acao editada")
+        self.assertEqual(tratamento.situacao, "Em andamento")
 
-        tratamento.nome = ""
+    def test_editar_tratamento_invalido(self):
+        tratamento = self.criar_tratamento()
+        tratamento.acao = ""
 
         with self.assertRaises(ValidationError):
             tratamento.full_clean()
-            
+
     # Test desativar tratamento
     def test_desativar_tratamento_valido(self):
-        tratamento = Tratamento.objects.create(
-            nome="Tratamento para Desativar",
-            descricao="Descrição do tratamento para desativar",
-        )
-
-        tratamento.ativo = False
+        tratamento = self.criar_tratamento()
+        tratamento.situacao = "Desativado"
         tratamento.save()
-        
-    def test_desativar_tratamento_invalido(self):
-        tratamento = Tratamento.objects.create(
-            nome="Tratamento para Desativar",
-            descricao="Descrição do tratamento para desativar",
-        )
 
-        tratamento.ativo = "invalid_value"
+        tratamento.refresh_from_db()
+        self.assertEqual(tratamento.situacao, "Desativado")
+
+    def test_desativar_tratamento_invalido(self):
+        tratamento = self.criar_tratamento()
+        tratamento.situacao = ""
 
         with self.assertRaises(ValidationError):
             tratamento.full_clean()
-            
+
     # Test detalhes tratamento
     def test_detalhes_tratamento_valido(self):
-        tratamento = Tratamento.objects.create(
-            nome="Tratamento para Detalhes",
-            descricao="Descrição do tratamento para detalhes",
+        tratamento = self.criar_tratamento(
+            resposta="Resposta para detalhes",
+            acao="Acao para detalhes",
         )
 
-        self.assertEqual(tratamento.nome, "Tratamento para Detalhes")
-        self.assertEqual(tratamento.descricao, "Descrição do tratamento para detalhes")
-        
+        self.assertEqual(tratamento.resposta, "Resposta para detalhes")
+        self.assertEqual(tratamento.acao, "Acao para detalhes")
+
     def test_detalhes_tratamento_invalido(self):
-        tratamento = Tratamento.objects.create(
-            nome="Tratamento para Detalhes",
-            descricao="Descrição do tratamento para detalhes",
-        )
-
-        self.assertEqual(tratamento.nome, "Tratamento para Detalhes")
-        self.assertEqual(tratamento.descricao, "Descrição do tratamento para detalhes")
-    
+        with self.assertRaises(Tratamento.DoesNotExist):
+            Tratamento.objects.get(id=999)
