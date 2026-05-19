@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from .forms import TratamentoForm
 from .models import Tratamento
 
@@ -22,7 +22,7 @@ def listar_tratamentos(request):
 
 
 def editar_tratamento(request, pk):
-    tratamento = Tratamento.objects.get(pk=pk)
+    tratamento = get_object_or_404(Tratamento, pk=pk)
     if request.method == "POST":
         form = TratamentoForm(request.POST, instance=tratamento)
         if form.is_valid():
@@ -35,12 +35,19 @@ def editar_tratamento(request, pk):
 
 
 def desativar_tratamento(request, pk):
-    tratamento = Tratamento.objects.get(pk=pk)
+    tratamento = get_object_or_404(Tratamento, pk=pk)
     tratamento.situacao = "Desativado"
     tratamento.save()
     return render(request, "sucesso_tratamento.html")
 
 
+def ativar_tratamento(request, pk):
+    tratamento = get_object_or_404(Tratamento, pk=pk)
+    tratamento.situacao = "Ativo"
+    tratamento.save()
+    return render(request, "sucesso_tratamento.html")
+
+
 def detalhes_tratamento(request, pk):
-    tratamento = Tratamento.objects.get(pk=pk)
+    tratamento = get_object_or_404(Tratamento, pk=pk)
     return render(request, "detalhes_tratamento.html", {"tratamento": tratamento})

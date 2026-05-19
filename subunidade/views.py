@@ -1,4 +1,4 @@
-from django.shortcuts import render
+from django.shortcuts import get_object_or_404, render
 from .models import Subunidade
 from .forms import SubunidadeForm
 
@@ -22,12 +22,12 @@ def listar_subunidades(request):
 
 
 def detalhes_subunidade(request, subunidade_id):
-    subunidade = Subunidade.objects.get(id=subunidade_id)
+    subunidade = get_object_or_404(Subunidade, id=subunidade_id)
     return render(request, "detalhes_subunidade.html", {"subunidade": subunidade})
 
 
 def editar_subunidade(request, subunidade_id):
-    subunidade = Subunidade.objects.get(id=subunidade_id)
+    subunidade = get_object_or_404(Subunidade, id=subunidade_id)
     if request.method == "POST":
         form = SubunidadeForm(request.POST, instance=subunidade)
         if form.is_valid():
@@ -40,7 +40,7 @@ def editar_subunidade(request, subunidade_id):
 
 
 def desativar_subunidade(request, subunidade_id):
-    subunidade = Subunidade.objects.get(id=subunidade_id)
+    subunidade = get_object_or_404(Subunidade, id=subunidade_id)
     subunidade.ativo = False
     subunidade.save()
     return render(request, "sucesso_subunidade.html")
