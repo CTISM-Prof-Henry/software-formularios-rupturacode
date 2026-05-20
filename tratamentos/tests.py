@@ -228,3 +228,46 @@ class TratamentoTests(TestCase):
 
         self.assertEqual(response.status_code, 200)
         self.assertEqual(len(response.context["tratamentos"]), 2)
+
+
+    def test_criar_tratamento_valido_endpoint(self):
+        url = reverse("criar_tratamento")
+
+        usuario = Usuario.objects.create()
+        risco = Risco.objects.create()
+
+        response = self.client.post(url, {
+            "resposta": "Resposta teste",
+            "acao": "Acao teste",
+            "situacao": "Aberto",
+            "data_inicio": "2024-01-01",
+            "data_fim": "2024-01-10",
+            "usuario_responsavel": usuario.id,
+            "risco": risco.id,
+        })
+
+        print(response.status_code)  
+        self.assertEqual(response.status_code, 302)
+        self.assertTrue(
+            Tratamento.objects.filter(acao="Acao teste").exists()
+        )
+
+    def test_criar_tratamento_invalido_endpoint(self):
+        url = reverse("criar_tratamento")
+
+        response = self.client.post(url, {
+            "resposta": "",
+            "acao": "",
+            "situacao": "",
+            "data_inicio": "",
+            "data_fim": "",
+            "usuario_responsavel": "",
+            "risco": "",
+        })
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertFalse(
+            Tratamento.objects.filter(acao="").exists()
+        )
+

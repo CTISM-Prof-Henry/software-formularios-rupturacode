@@ -1,15 +1,24 @@
-from django.shortcuts import get_object_or_404, render
+from django.shortcuts import get_object_or_404, render, redirect
 from .forms import TratamentoForm
 from .models import Tratamento
+from usuario.models import Usuario
+from riscos.models import Risco
 
 
-# Create your views here.
+
 def criar_tratamento(request):
     if request.method == "POST":
         form = TratamentoForm(request.POST)
         if form.is_valid():
-            form.save()
-            return render(request, "sucesso_tratamento.html")
+            tratamento = form.save(commit=False)
+
+            tratamento.usuario_responsavel = Usuario.objects.first()
+            tratamento.risco = Risco.objects.first()
+
+            tratamento.save()
+
+            return redirect("listar_tratamentos")
+
     else:
         form = TratamentoForm()
 
@@ -51,3 +60,5 @@ def ativar_tratamento(request, pk):
 def detalhes_tratamento(request, pk):
     tratamento = get_object_or_404(Tratamento, pk=pk)
     return render(request, "detalhes_tratamento.html", {"tratamento": tratamento})
+
+
