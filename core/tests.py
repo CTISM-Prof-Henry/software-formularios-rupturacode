@@ -4,6 +4,7 @@ from django.test import TestCase
 from django.urls import reverse
 from django.utils import timezone
 
+from riscos.test_helpers import dados_risco_padrao
 from riscos.models import Risco
 from tratamentos.models import Tratamento
 from usuario.models import Usuario
@@ -19,19 +20,7 @@ class DashboardTests(TestCase):
         )
 
     def criar_risco(self, **kwargs):
-        dados = {
-            "nome": "Risco de Teste",
-            "descricao": "Descricao do risco de teste",
-            "tipo": "riscos_operacionais",
-            "departamento": "departamento_1",
-            "impacto": "Alto",
-            "probabilidade": "Media",
-            "nivel_de_risco": "Alto",
-            "eficacia_dos_controles": "Media",
-            "nivel_residual": "Medio",
-        }
-        dados.update(kwargs)
-        return Risco.objects.create(**dados)
+        return Risco.objects.create(**dados_risco_padrao(**kwargs))
 
     def criar_tratamento(self, usuario, risco):
         return Tratamento.objects.create(

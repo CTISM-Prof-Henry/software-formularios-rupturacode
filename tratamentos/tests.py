@@ -123,5 +123,3 @@ class TratamentoTests(TestCase):
     def test_listar_tratamentos_invalido(self):
         tratamentos = Tratamento.objects.all()
         self.assertEqual(tratamentos.count(), 0)
-
-

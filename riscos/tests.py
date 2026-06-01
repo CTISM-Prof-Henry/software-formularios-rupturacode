@@ -5,23 +5,12 @@ from django.test import TestCase
 from django.urls import reverse
 
 from .models import Risco
+from .test_helpers import dados_risco_padrao
 
 
 class RiscoTests(TestCase):
     def dados_risco(self, **kwargs):
-        dados = {
-            "nome": "Risco de Teste",
-            "descricao": "Descricao do risco de teste",
-            "tipo": "riscos_operacionais",
-            "departamento": "departamento_1",
-            "impacto": "Alto",
-            "probabilidade": "Media",
-            "nivel_de_risco": "Alto",
-            "eficacia_dos_controles": "Media",
-            "nivel_residual": "Medio",
-        }
-        dados.update(kwargs)
-        return dados
+        return dados_risco_padrao(**kwargs)
 
     def criar_risco(self, **kwargs):
         return Risco.objects.create(**self.dados_risco(**kwargs))

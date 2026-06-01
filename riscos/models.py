@@ -1,9 +1,6 @@
-import time
-
 from django.db import models
 
 
-# Create your models here.
 class Risco(models.Model):
     TIPOS_DE_RISCO = [
         ("riscos_operacionais", "Riscos Operacionais"),
