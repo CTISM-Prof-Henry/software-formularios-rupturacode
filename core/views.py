@@ -1,23 +1,14 @@
-from datetime import timedelta
-
-from django.shortcuts import render
-from django.utils import timezone
-
-from riscos.models import Risco
-from tratamentos.models import Tratamento
+from django.conf import settings
+from django.http import FileResponse, HttpResponse
 
 
-def dashboard(request):
-    riscos = Risco.objects.all()
-    tratamentos = Tratamento.objects.all()
+def frontend_index(request):
+    index_path = settings.FRONTEND_DIR / "index.html"
 
-    contexto = {
-        "total_riscos": riscos.count(),
-        "riscos_alto_impacto": riscos.filter(impacto="Alto").count(),
-        "riscos_com_tratamentos": tratamentos.count(),
-        "riscos_recentes": riscos.filter(
-            data_criacao__gte=timezone.now() - timedelta(days=30)
-        ).count(),
-    }
+    if not index_path.exists():
+        return HttpResponse(
+            "Frontend ainda nao foi compilado. Execute `cd frontend && npm run build`.",
+            status=503,
+        )
 
-    return render(request, "dashboard.html", contexto)
+    return FileResponse(index_path.open("rb"), content_type="text/html")

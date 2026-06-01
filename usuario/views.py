@@ -1,3 +1,5 @@
-from django.shortcuts import render
+from django.http import JsonResponse
 
-# Create your views here.
+
+def usuario_status(request):
+    return JsonResponse({"detail": "Modulo de usuarios disponivel apenas via API."})
