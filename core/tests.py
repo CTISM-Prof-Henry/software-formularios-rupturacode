@@ -45,14 +45,15 @@ class DashboardTests(TestCase):
         )
 
     def test_dashboard_sem_dados(self):
-        url = reverse("dashboard")
+        url = reverse("api_dashboard_summary")
         response = self.client.get(url)
+        data = response.json()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["total_riscos"], 0)
-        self.assertEqual(response.context["riscos_alto_impacto"], 0)
-        self.assertEqual(response.context["riscos_com_tratamentos"], 0)
-        self.assertEqual(response.context["riscos_recentes"], 0)
+        self.assertEqual(data["totalRiscos"], 0)
+        self.assertEqual(data["riscosAltoImpacto"], 0)
+        self.assertEqual(data["riscosComTratamento"], 0)
+        self.assertEqual(data["novosRiscos"], 0)
 
     def test_dashboard_com_dados(self):
         usuario = self.criar_usuario()
@@ -60,14 +61,15 @@ class DashboardTests(TestCase):
         self.criar_risco(nome="Risco Baixo", impacto="Baixo")
         self.criar_tratamento(usuario, risco_alto)
 
-        url = reverse("dashboard")
+        url = reverse("api_dashboard_summary")
         response = self.client.get(url)
+        data = response.json()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["total_riscos"], 2)
-        self.assertEqual(response.context["riscos_alto_impacto"], 1)
-        self.assertEqual(response.context["riscos_com_tratamentos"], 1)
-        self.assertEqual(response.context["riscos_recentes"], 2)
+        self.assertEqual(data["totalRiscos"], 2)
+        self.assertEqual(data["riscosAltoImpacto"], 1)
+        self.assertEqual(data["riscosComTratamento"], 1)
+        self.assertEqual(data["novosRiscos"], 2)
 
     def test_dashboard_ignora_riscos_antigos_em_recentes(self):
         risco = self.criar_risco(nome="Risco Antigo")
@@ -75,9 +77,10 @@ class DashboardTests(TestCase):
             data_criacao=timezone.now() - timedelta(days=31)
         )
 
-        url = reverse("dashboard")
+        url = reverse("api_dashboard_summary")
         response = self.client.get(url)
+        data = response.json()
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.context["total_riscos"], 1)
-        self.assertEqual(response.context["riscos_recentes"], 0)
+        self.assertEqual(data["totalRiscos"], 1)
+        self.assertEqual(data["novosRiscos"], 0)

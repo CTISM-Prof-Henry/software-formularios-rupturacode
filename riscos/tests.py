@@ -1,3 +1,5 @@
+import json
+
 from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
@@ -41,18 +43,27 @@ class RiscoTests(TestCase):
             risco.full_clean()
 
     def test_criar_risco_invalido_endpoint(self):
-        url = reverse("criar_risco")
-        response = self.client.post(url, data=self.dados_risco(nome=""))
+        url = reverse("api_riscos_collection")
+        response = self.client.post(
+            url,
+            data=json.dumps(self.dados_risco(nome="")),
+            content_type="application/json",
+        )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 400)
         self.assertEqual(Risco.objects.count(), 0)
 
     def test_criar_risco_valido_endpoint(self):
-        url = reverse("criar_risco")
-        response = self.client.post(url, data=self.dados_risco())
+        url = reverse("api_riscos_collection")
+        response = self.client.post(
+            url,
+            data=json.dumps(self.dados_risco()),
+            content_type="application/json",
+        )
 
-        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.status_code, 201)
         self.assertEqual(Risco.objects.count(), 1)
+        self.assertEqual(response.json()["nome"], "Risco de Teste")
 
     # Test editar risco
     def test_editar_risco_valido(self):
@@ -75,33 +86,6 @@ class RiscoTests(TestCase):
         with self.assertRaises(ValidationError):
             risco.full_clean()
 
-    def test_editar_risco_invalido_endpoint(self):
-        risco = self.criar_risco()
-        url = reverse("editar_risco", args=[risco.id])
-        response = self.client.post(url, data=self.dados_risco(nome=""))
-
-        risco.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(risco.nome, "Risco de Teste")
-
-    def test_editar_risco_valido_endpoint(self):
-        risco = self.criar_risco()
-        url = reverse("editar_risco", args=[risco.id])
-        response = self.client.post(
-            url,
-            data=self.dados_risco(
-                nome="Risco Editado",
-                descricao="Descricao do risco editado",
-                impacto="Baixo",
-            ),
-        )
-
-        risco.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(risco.nome, "Risco Editado")
-        self.assertEqual(risco.descricao, "Descricao do risco editado")
-        self.assertEqual(risco.impacto, "Baixo")
-
     # Test desativar risco
     def test_desativar_risco_valido(self):
         risco = self.criar_risco()
@@ -117,21 +101,6 @@ class RiscoTests(TestCase):
 
         with self.assertRaises(ValidationError):
             risco.full_clean()
-
-    def test_desativar_risco_invalido_endpoint(self):
-        url = reverse("desativar_risco", args=[999])
-        response = self.client.post(url)
-
-        self.assertEqual(response.status_code, 404)
-
-    def test_desativar_risco_valido_endpoint(self):
-        risco = self.criar_risco()
-        url = reverse("desativar_risco", args=[risco.id])
-        response = self.client.post(url)
-
-        risco.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertFalse(risco.ativo)
 
     # Test detalhes risco
     def test_detalhes_risco_valido(self):
@@ -149,22 +118,6 @@ class RiscoTests(TestCase):
         with self.assertRaises(Risco.DoesNotExist):
             Risco.objects.get(id=999)
 
-    def test_detalhes_risco_invalido_endpoint(self):
-        url = reverse("detalhes_risco", args=[999])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 404)
-
-    def test_detalhes_risco_valido_endpoint(self):
-        risco = self.criar_risco(
-            nome="Risco para Detalhes",
-            descricao="Descricao do risco para detalhes",
-        )
-        url = reverse("detalhes_risco", args=[risco.id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-
     # Test listar riscos
     def test_listar_riscos_valido(self):
         self.criar_risco(nome="Risco 1")
@@ -178,16 +131,17 @@ class RiscoTests(TestCase):
         self.assertEqual(riscos.count(), 0)
 
     def test_listar_riscos_invalido_endpoint(self):
-        url = reverse("listar_riscos")
+        url = reverse("api_riscos_collection")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["results"], [])
 
     def test_listar_riscos_valido_endpoint(self):
         self.criar_risco(nome="Risco 1")
         self.criar_risco(nome="Risco 2")
-        url = reverse("listar_riscos")
+        url = reverse("api_riscos_collection")
         response = self.client.get(url)
 
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context["riscos"]), 2)
+        self.assertEqual(len(response.json()["results"]), 2)

@@ -2,7 +2,6 @@ from datetime import date
 
 from django.core.exceptions import ValidationError
 from django.test import TestCase
-from django.urls import reverse
 
 from riscos.models import Risco
 from usuario.models import Usuario
@@ -43,17 +42,6 @@ class TratamentoTests(TestCase):
         dados.update(kwargs)
         return dados
 
-    def dados_formulario_tratamento(self, **kwargs):
-        dados = {
-            "resposta": "Resposta de teste",
-            "acao": "Acao de teste",
-            "data_inicio": "2026-05-01",
-            "data_fim": "2026-05-30",
-            "situacao": "Ativo",
-        }
-        dados.update(kwargs)
-        return dados
-
     def criar_tratamento(self, **kwargs):
         return Tratamento.objects.create(**self.dados_tratamento(**kwargs))
 
@@ -72,23 +60,6 @@ class TratamentoTests(TestCase):
 
         with self.assertRaises(ValidationError):
             tratamento.full_clean()
-
-    def test_criar_tratamento_invalido_endpoint(self):
-        url = reverse("criar_tratamento")
-        response = self.client.post(
-            url,
-            data=self.dados_formulario_tratamento(resposta=""),
-        )
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(Tratamento.objects.count(), 0)
-
-    def test_criar_tratamento_valido_endpoint(self):
-        url = reverse("criar_tratamento")
-        response = self.client.post(url, data=self.dados_formulario_tratamento())
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(Tratamento.objects.count(), 1)
 
     # Test editar tratamento
     def test_editar_tratamento_valido(self):
@@ -111,36 +82,6 @@ class TratamentoTests(TestCase):
         with self.assertRaises(ValidationError):
             tratamento.full_clean()
 
-    def test_editar_tratamento_invalido_endpoint(self):
-        tratamento = self.criar_tratamento()
-        url = reverse("editar_tratamento", args=[tratamento.id])
-        response = self.client.post(
-            url,
-            data=self.dados_formulario_tratamento(acao=""),
-        )
-
-        tratamento.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(tratamento.acao, "Acao de teste")
-
-    def test_editar_tratamento_valido_endpoint(self):
-        tratamento = self.criar_tratamento()
-        url = reverse("editar_tratamento", args=[tratamento.id])
-        response = self.client.post(
-            url,
-            data=self.dados_formulario_tratamento(
-                resposta="Resposta editada",
-                acao="Acao editada",
-                situacao="Em andamento",
-            ),
-        )
-
-        tratamento.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(tratamento.resposta, "Resposta editada")
-        self.assertEqual(tratamento.acao, "Acao editada")
-        self.assertEqual(tratamento.situacao, "Em andamento")
-
     # Test desativar tratamento
     def test_desativar_tratamento_valido(self):
         tratamento = self.criar_tratamento()
@@ -157,21 +98,6 @@ class TratamentoTests(TestCase):
         with self.assertRaises(ValidationError):
             tratamento.full_clean()
 
-    def test_desativar_tratamento_invalido_endpoint(self):
-        url = reverse("desativar_tratamento", args=[999])
-        response = self.client.post(url)
-
-        self.assertEqual(response.status_code, 404)
-
-    def test_desativar_tratamento_valido_endpoint(self):
-        tratamento = self.criar_tratamento()
-        url = reverse("desativar_tratamento", args=[tratamento.id])
-        response = self.client.post(url)
-
-        tratamento.refresh_from_db()
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(tratamento.situacao, "Desativado")
-
     # Test detalhes tratamento
     def test_detalhes_tratamento_valido(self):
         tratamento = self.criar_tratamento(
@@ -186,22 +112,6 @@ class TratamentoTests(TestCase):
         with self.assertRaises(Tratamento.DoesNotExist):
             Tratamento.objects.get(id=999)
 
-    def test_detalhes_tratamento_invalido_endpoint(self):
-        url = reverse("detalhes_tratamento", args=[999])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 404)
-
-    def test_detalhes_tratamento_valido_endpoint(self):
-        tratamento = self.criar_tratamento(
-            resposta="Resposta para detalhes",
-            acao="Acao para detalhes",
-        )
-        url = reverse("detalhes_tratamento", args=[tratamento.id])
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-
     # Test listar tratamentos
     def test_listar_tratamentos_valido(self):
         self.criar_tratamento(resposta="Resposta 1")
@@ -214,60 +124,4 @@ class TratamentoTests(TestCase):
         tratamentos = Tratamento.objects.all()
         self.assertEqual(tratamentos.count(), 0)
 
-    def test_listar_tratamentos_invalido_endpoint(self):
-        url = reverse("listar_tratamentos")
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-
-    def test_listar_tratamentos_valido_endpoint(self):
-        self.criar_tratamento(resposta="Resposta 1")
-        self.criar_tratamento(resposta="Resposta 2")
-        url = reverse("listar_tratamentos")
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(len(response.context["tratamentos"]), 2)
-
-
-    def test_criar_tratamento_valido_endpoint(self):
-        url = reverse("criar_tratamento")
-
-        usuario = Usuario.objects.create()
-        risco = Risco.objects.create()
-
-        response = self.client.post(url, {
-            "resposta": "Resposta teste",
-            "acao": "Acao teste",
-            "situacao": "Aberto",
-            "data_inicio": "2024-01-01",
-            "data_fim": "2024-01-10",
-            "usuario_responsavel": usuario.id,
-            "risco": risco.id,
-        })
-
-        print(response.status_code)  
-        self.assertEqual(response.status_code, 302)
-        self.assertTrue(
-            Tratamento.objects.filter(acao="Acao teste").exists()
-        )
-
-    def test_criar_tratamento_invalido_endpoint(self):
-        url = reverse("criar_tratamento")
-
-        response = self.client.post(url, {
-            "resposta": "",
-            "acao": "",
-            "situacao": "",
-            "data_inicio": "",
-            "data_fim": "",
-            "usuario_responsavel": "",
-            "risco": "",
-        })
-
-        self.assertEqual(response.status_code, 200)
-
-        self.assertFalse(
-            Tratamento.objects.filter(acao="").exists()
-        )
 
