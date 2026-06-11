@@ -31,7 +31,8 @@ class Command(BaseCommand):
 
         criados = atualizados = ignorados = 0
 
-        with csv_path.open(encoding="latin-1") as handle:
+        # O CSV é UTF-8 (utf-8-sig tolera BOM se houver).
+        with csv_path.open(encoding="utf-8-sig") as handle:
             reader = csv.DictReader(line for line in handle if line.strip())
             for row in reader:
                 tipo = (row.get("TIPO_UNIDADE") or "").strip()
