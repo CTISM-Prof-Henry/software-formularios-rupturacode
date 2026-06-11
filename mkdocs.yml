@@ -1,0 +1,27 @@
+site_name: Sistema de Gerenciamento de Riscos UFSM
+site_description: Manual do Usuário do Sistema de Gerenciamento de Riscos da UFSM
+site_author: Equipe RupturaCode
+
+theme:
+  name: material
+  language: pt-BR
+
+  features:
+  - navigation.sections
+  - navigation.top
+  - search.highlight
+  - search.suggest
+  - content.code.copy
+
+nav:
+  - Início: index.md
+  - Acesso ao Sistema: acesso.md
+  - Dashboard: dashboard.md
+  - Cadastro de Setores: setores.md
+  - Cadastro de Riscos: riscos.md
+  - Avaliação de Riscos: avaliacao.md
+  - Plano de Tratamento: tratamento.md
+  - Monitoramento dos Riscos: monitoramento.md
+  - Relatórios: relatorios.md
+  - Gerenciamento de Usuários: usuarios.md
+  - Perguntas Frequentes: faq.md
