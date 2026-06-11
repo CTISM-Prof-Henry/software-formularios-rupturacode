@@ -1,5 +1,9 @@
+import json
+
+from django.contrib.auth.hashers import make_password
 from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 
 from .models import Usuario
 
@@ -13,6 +17,7 @@ class UsuarioTests(TestCase):
             "cargo": "Analista",
         }
         dados.update(kwargs)
+        dados.setdefault("email", f"usuario{dados['matricula']}@teste.com")
         return Usuario.objects.create(**dados)
 
     # Test criar usuario
@@ -93,3 +98,53 @@ class UsuarioTests(TestCase):
     def test_listar_usuarios_invalido(self):
         usuarios = Usuario.objects.all()
         self.assertEqual(usuarios.count(), 0)
+
+
+class UsuarioApiTests(TestCase):
+    def _post(self, url, payload):
+        return self.client.post(url, data=json.dumps(payload), content_type="application/json")
+
+    def test_criar_usuario_via_api(self):
+        response = self._post(
+            reverse("api_usuarios_collection"),
+            {
+                "nome": "Joao",
+                "email": "joao@atlas.com",
+                "matricula": "777",
+                "departamento": "TI",
+                "cargo": "Analista",
+                "senha": "segredo",
+            },
+        )
+        self.assertEqual(response.status_code, 201)
+        usuario = Usuario.objects.get(email="joao@atlas.com")
+        # senha deve ser armazenada com hash, nunca em texto puro
+        self.assertNotEqual(usuario.senha, "segredo")
+
+    def test_criar_usuario_sem_campos_obrigatorios(self):
+        response = self._post(reverse("api_usuarios_collection"), {"nome": "X"})
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("email", response.json()["errors"])
+
+    def test_login_e_me(self):
+        Usuario.objects.create(
+            nome="Admin",
+            email="admin@atlas.com",
+            matricula="1",
+            departamento="TI",
+            cargo="Coord",
+            senha=make_password("1234"),
+        )
+        login = self._post(reverse("api_auth_login"), {"email": "admin@atlas.com", "senha": "1234"})
+        self.assertEqual(login.status_code, 200)
+
+        me_response = self.client.get(reverse("api_auth_me"))
+        self.assertEqual(me_response.status_code, 200)
+        self.assertEqual(me_response.json()["email"], "admin@atlas.com")
+
+    def test_login_invalido(self):
+        response = self._post(reverse("api_auth_login"), {"email": "x@y.com", "senha": "errada"})
+        self.assertEqual(response.status_code, 401)
+
+    def test_me_sem_sessao(self):
+        self.assertEqual(self.client.get(reverse("api_auth_me")).status_code, 401)

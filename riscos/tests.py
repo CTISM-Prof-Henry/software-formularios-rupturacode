@@ -126,6 +126,38 @@ class RiscoTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.json()["results"], [])
 
+    # Test endpoint de detalhe (GET/PUT/DELETE)
+    def test_detalhe_risco_get_endpoint(self):
+        risco = self.criar_risco()
+        url = reverse("api_riscos_detail", args=[risco.id])
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()["nome"], "Risco de Teste")
+
+    def test_detalhe_risco_put_endpoint(self):
+        risco = self.criar_risco()
+        url = reverse("api_riscos_detail", args=[risco.id])
+        payload = self.dados_risco(nome="Risco Atualizado", descricao="Nova descricao do risco")
+        response = self.client.put(url, data=json.dumps(payload), content_type="application/json")
+
+        self.assertEqual(response.status_code, 200)
+        risco.refresh_from_db()
+        self.assertEqual(risco.nome, "Risco Atualizado")
+
+    def test_detalhe_risco_delete_faz_soft_delete(self):
+        risco = self.criar_risco()
+        url = reverse("api_riscos_detail", args=[risco.id])
+        response = self.client.delete(url)
+
+        self.assertEqual(response.status_code, 200)
+        risco.refresh_from_db()
+        self.assertFalse(risco.ativo)
+
+    def test_detalhe_risco_inexistente_retorna_404(self):
+        url = reverse("api_riscos_detail", args=[999])
+        self.assertEqual(self.client.get(url).status_code, 404)
+
     def test_listar_riscos_valido_endpoint(self):
         self.criar_risco(nome="Risco 1")
         self.criar_risco(nome="Risco 2")

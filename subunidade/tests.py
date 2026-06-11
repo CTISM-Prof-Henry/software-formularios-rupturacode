@@ -1,96 +1,63 @@
-from django.core.exceptions import ValidationError
 from django.test import TestCase
+from django.urls import reverse
 
 from .models import Subunidade
 
 
-class SubUnidadeModelTest(TestCase):
-    def criar_subunidade(self, **kwargs):
-        dados = {
-            "nome": "SubUnidade de Teste",
-            "descricao": "Descricao da subunidade de teste",
-            "sigla": "SUT",
-        }
-        dados.update(kwargs)
-        return Subunidade.objects.create(**dados)
+def criar_unidade(**kwargs):
+    dados = {
+        "cod_estruturado": "07.67.00.00.0.0",
+        "nome": "Departamento de Computacao Aplicada",
+        "centro_nome": "Centro de Tecnologia",
+        "centro_sigla": "CT",
+        "tipo": "Departamento Didático",
+        "situacao": "Formal",
+        "ativo": True,
+    }
+    dados.update(kwargs)
+    return Subunidade.objects.create(**dados)
 
-    # Test criar subunidade
-    def test_criar_subunidade_valida(self):
-        subunidade = self.criar_subunidade()
 
-        self.assertEqual(subunidade.nome, "SubUnidade de Teste")
-        self.assertEqual(subunidade.descricao, "Descricao da subunidade de teste")
-        self.assertEqual(subunidade.sigla, "SUT")
-        self.assertTrue(subunidade.ativo)
+class SubunidadeModelTest(TestCase):
+    def test_criar_unidade_valida(self):
+        unidade = criar_unidade()
+        self.assertEqual(unidade.centro_sigla, "CT")
+        self.assertTrue(unidade.ativo)
+        self.assertEqual(str(unidade), "Departamento de Computacao Aplicada")
 
-    def test_criar_subunidade_invalida(self):
-        subunidade = self.criar_subunidade(nome="")
+    def test_cod_estruturado_unico(self):
+        criar_unidade()
+        with self.assertRaises(Exception):
+            criar_unidade(nome="Outra")
 
-        with self.assertRaises(ValidationError):
-            subunidade.full_clean()
 
-    # Test editar subunidade
-    def test_editar_subunidade_valida(self):
-        subunidade = self.criar_subunidade()
-
-        subunidade.nome = "SubUnidade Editada"
-        subunidade.descricao = "Descricao da subunidade editada"
-        subunidade.sigla = "SE"
-        subunidade.save()
-
-        subunidade.refresh_from_db()
-        self.assertEqual(subunidade.nome, "SubUnidade Editada")
-        self.assertEqual(subunidade.descricao, "Descricao da subunidade editada")
-        self.assertEqual(subunidade.sigla, "SE")
-
-    def test_editar_subunidade_invalida(self):
-        subunidade = self.criar_subunidade()
-        subunidade.nome = ""
-
-        with self.assertRaises(ValidationError):
-            subunidade.full_clean()
-
-    # Test desativar subunidade
-    def test_desativar_subunidade_valida(self):
-        subunidade = self.criar_subunidade()
-        subunidade.ativo = False
-        subunidade.save()
-
-        subunidade.refresh_from_db()
-        self.assertFalse(subunidade.ativo)
-
-    def test_desativar_subunidade_invalida(self):
-        subunidade = self.criar_subunidade()
-        subunidade.ativo = False
-        subunidade.save()
-
-        subunidade.refresh_from_db()
-        self.assertFalse(subunidade.ativo)
-
-    # Test detalhes subunidade
-    def test_detalhes_subunidade_valida(self):
-        subunidade = self.criar_subunidade(
-            nome="SubUnidade para Detalhes",
-            descricao="Descricao da subunidade para detalhes",
-            sigla="SPD",
+class SubunidadeApiTests(TestCase):
+    def setUp(self):
+        criar_unidade(cod_estruturado="07.67.00.00.0.0", nome="Computacao Aplicada", centro_sigla="CT")
+        criar_unidade(cod_estruturado="07.37.00.00.0.0", nome="Eletromecanica", centro_sigla="CT")
+        criar_unidade(
+            cod_estruturado="10.01.00.00.0.0",
+            nome="Letras",
+            centro_sigla="CAL",
+            centro_nome="Centro de Artes e Letras",
         )
 
-        self.assertEqual(subunidade.nome, "SubUnidade para Detalhes")
-        self.assertEqual(subunidade.descricao, "Descricao da subunidade para detalhes")
-        self.assertEqual(subunidade.sigla, "SPD")
+    def test_centros_distintos(self):
+        response = self.client.get(reverse("api_subunidades_centros"))
+        self.assertEqual(response.status_code, 200)
+        siglas = sorted(c["sigla"] for c in response.json()["results"])
+        self.assertEqual(siglas, ["CAL", "CT"])
 
-    def test_detalhes_subunidade_invalida(self):
-        with self.assertRaises(Subunidade.DoesNotExist):
-            Subunidade.objects.get(id=999)
+    def test_listar_unidades_por_centro(self):
+        response = self.client.get(reverse("api_subunidades_collection"), {"centro": "CT"})
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(len(response.json()["results"]), 2)
 
-    # Test listar subunidades
-    def test_listar_subunidades_valida(self):
-        self.criar_subunidade(nome="SubUnidade 1", sigla="SU1")
-        self.criar_subunidade(nome="SubUnidade 2", sigla="SU2")
+    def test_busca_por_nome(self):
+        response = self.client.get(reverse("api_subunidades_collection"), {"busca": "Letras"})
+        self.assertEqual(len(response.json()["results"]), 1)
 
-        subunidades = Subunidade.objects.all()
-        self.assertEqual(subunidades.count(), 2)
-
-    def test_listar_subunidades_invalida(self):
-        subunidades = Subunidade.objects.all()
-        self.assertEqual(subunidades.count(), 0)
+    def test_unidade_inativa_nao_aparece(self):
+        criar_unidade(cod_estruturado="99.99.00.00.0.0", nome="Extinta", situacao="Extinta", ativo=False)
+        response = self.client.get(reverse("api_subunidades_collection"), {"centro": "CT"})
+        self.assertEqual(len(response.json()["results"]), 2)

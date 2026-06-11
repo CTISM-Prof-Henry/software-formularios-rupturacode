@@ -124,3 +124,7 @@ STATIC_URL = "static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
 
 STATICFILES_DIRS = [FRONTEND_DIR] if FRONTEND_DIR.exists() else []
+
+# Email (dev): codigos de recuperacao saem no terminal do servidor.
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+DEFAULT_FROM_EMAIL = "atlas@localhost"

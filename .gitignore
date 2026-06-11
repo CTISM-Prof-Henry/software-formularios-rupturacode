@@ -40,6 +40,10 @@ build/
 dist/
 *.egg-info/
 
+# Claude (instruções e registros — não versionar)
+/CLAUDE.md
+/claude/
+
 # Editors and OS files
 .vscode/
 .idea/

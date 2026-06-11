@@ -80,3 +80,36 @@ def riscos_collection(request):
 
     risco = Risco.objects.create(**fields)
     return JsonResponse(_risk_to_dict(risco), status=201)
+
+
+@csrf_exempt
+@require_http_methods(["GET", "PUT", "DELETE"])
+def riscos_detail(request, risco_id):
+    try:
+        risco = Risco.objects.get(pk=risco_id)
+    except Risco.DoesNotExist:
+        return JsonResponse({"errors": {"id": "Risco nao encontrado."}}, status=404)
+
+    if request.method == "GET":
+        return JsonResponse(_risk_to_dict(risco))
+
+    if request.method == "DELETE":
+        risco.ativo = False
+        risco.save(update_fields=["ativo", "data_atualizacao"])
+        return JsonResponse({"ok": True})
+
+    try:
+        payload = json.loads(request.body.decode("utf-8") or "{}")
+    except json.JSONDecodeError:
+        return JsonResponse({"errors": {"body": "JSON invalido."}}, status=400)
+
+    fields = _payload_to_risk_fields(payload)
+    errors = _validate(fields)
+
+    if errors:
+        return JsonResponse({"errors": errors}, status=400)
+
+    for key, value in fields.items():
+        setattr(risco, key, value)
+    risco.save()
+    return JsonResponse(_risk_to_dict(risco))

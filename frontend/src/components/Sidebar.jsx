@@ -1,12 +1,23 @@
-import { FileText, LayoutDashboard, PlusCircle, ShieldCheck } from 'lucide-react'
+import { FileText, LayoutDashboard, LogOut, PlusCircle, ShieldCheck, Users } from 'lucide-react'
+import { NavLink, useNavigate } from 'react-router-dom'
+import { useAuth } from '../hooks/useAuth.js'
 
 const navItems = [
-  { label: 'Dashboard', page: 'dashboard', icon: LayoutDashboard },
-  { label: 'Riscos', page: 'risks', icon: FileText },
-  { label: 'Novo risco', page: 'new-risk', icon: PlusCircle },
+  { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
+  { label: 'Riscos', to: '/riscos', icon: FileText },
+  { label: 'Novo risco', to: '/riscos/novo', icon: PlusCircle },
+  { label: 'Usuarios', to: '/usuarios', icon: Users },
 ]
 
-function Sidebar({ activePage, onNavigate }) {
+function Sidebar() {
+  const { user, logout } = useAuth()
+  const navigate = useNavigate()
+
+  async function handleLogout() {
+    await logout()
+    navigate('/login')
+  }
+
   return (
     <aside className="sidebar">
       <div className="brand">
@@ -14,8 +25,8 @@ function Sidebar({ activePage, onNavigate }) {
           <ShieldCheck size={24} strokeWidth={2.2} />
         </div>
         <div>
-          <strong>Atlas</strong>
-          <span>Gestão de riscos institucionais</span>
+          <strong>Atlas - Gestão de Riscos</strong>
+          <span>Sistema de gerenciamento de risco</span>
         </div>
       </div>
 
@@ -24,25 +35,26 @@ function Sidebar({ activePage, onNavigate }) {
           const Icon = item.icon
 
           return (
-            <a
-              className={activePage === item.page ? 'active' : undefined}
-              href="/"
+            <NavLink
+              className={({ isActive }) => (isActive ? 'active' : undefined)}
+              end={item.to === '/dashboard' || item.to === '/riscos'}
               key={item.label}
-              onClick={(event) => {
-                event.preventDefault()
-                onNavigate(item.page)
-              }}
+              to={item.to}
             >
               <Icon size={18} strokeWidth={2} />
               <span>{item.label}</span>
-            </a>
+            </NavLink>
           )
         })}
       </nav>
 
       <div className="sidebar-footer">
-        <span>Status</span>
-        <strong>Sistema em desenvolvimento</strong>
+        <span>Sessão</span>
+        <strong>{user?.nome || 'Usuário'}</strong>
+        <button className="logout-button" onClick={handleLogout} type="button">
+          <LogOut size={15} strokeWidth={2} />
+          Sair
+        </button>
       </div>
     </aside>
   )
