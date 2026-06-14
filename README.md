@@ -1,215 +1,298 @@
 # software-formularios-rupturacode
 
-Descrição curta do repositório.
+Sistema de **cadastro e gestão de riscos** (domínio UFSM). O backend Django 6 expõe uma API JSON e
+também serve o SPA já compilado; o frontend é React 19 + Vite 8. Banco SQLite.
 
 ## Sumário
 
+* [Stack](#stack)
+* [Estrutura de pastas](#estrutura-de-pastas)
 * [Pré-requisitos](#pré-requisitos)
 * [Instalação](#instalação)
-* [Instruções de uso](#instruções-de-uso)
-* [Contato](#contato)
+* [Como rodar](#como-rodar)
+* [Testes](#testes)
+* [API](#api)
+* [Diagramas](#diagramas)
+* [Desenvolvedores](#desenvolvedores)
 * [Bibliografia](#bibliografia)
+
+## Stack
+
+| Camada   | Tecnologias                                                              |
+|----------|--------------------------------------------------------------------------|
+| Backend  | Django 6, SQLite, deps via `uv` (`pyproject.toml` / `uv.lock`)           |
+| Frontend | React 19, Vite 8, react-router-dom, echarts, framer-motion, react-hook-form |
+
+Arquitetura **dois tiers, mesma origem em prod**: o Django serve o SPA Vite compilado (sem servidor
+web separado). Em dev rodam-se Vite e Django separados, com o Vite fazendo proxy de `/api` para o
+Django. A API é escrita à mão (function views retornando `JsonResponse`, sem DRF) e a auth é baseada
+em sessão.
+
+## Estrutura de pastas
+
+```
+software-formularios-rupturacode/
+├── backend/                  # Django (rode os comandos de backend daqui)
+│   ├── atlas/                # settings, urls, wsgi/asgi (projeto Django)
+│   ├── core/                 # dashboard, auth, view que serve o SPA
+│   ├── riscos/               # app Risco (+ scoring)
+│   ├── tratamentos/          # app Tratamento
+│   ├── usuario/              # app Usuario (auth por sessão)
+│   ├── subunidade/           # unidades UFSM (import via CSV)
+│   ├── manage.py
+│   └── db.sqlite3
+├── frontend/                 # React + Vite
+│   ├── src/                  # components, pages, hooks, lib/api.js
+│   └── dist/                 # build gerado (o que o Django serve em prod)
+├── docs/                     # mkdocs
+├── .venv/                    # virtualenv Python
+├── pyproject.toml / uv.lock  # deps Python (uv)
+└── requirements.txt          # espelho fixado das deps
+```
 
 ## Pré-requisitos
 
-Descreva aqui brevemente os pré-requisitos necessários para executar o código-fonte. Descreva também
-a configuração mínima da máquina em que o código foi desenvolvido, e se alguma configuração em particular é essencial
-para sua execução (por exemplo, placa de vídeo dedicada):
-
 | Configuração        | Valor                    |
 |---------------------|--------------------------|
-| Sistema operacional | Windows 10 Pro (64 bits) |
-| Processador         | Intel core i7 9700       |
-| Memória RAM         | 16GB                     |
+| Sistema operacional | Windows 10/11 (64 bits)  |
+| Python              | ≥ 3.12                   |
+| Node.js / npm       | Node 20+ recomendado     |
 | Necessita rede?     | Sim                      |
-
 
 ## Instalação
 
-Descreva aqui as instruções para instalação das ferramentas para execução do código-fonte: 
+```powershell
+# 1. Backend (na raiz do repo) — cria/usa o .venv e instala deps Python
+uv sync
+# alternativa sem uv:
+# python -m venv .venv; .venv\Scripts\python -m pip install -r requirements.txt
 
-```bash
-sudo apt-get install nano
+# 2. Frontend
+cd frontend
+npm install
+cd ..
 ```
 
-## Instruções de Uso
+## Como rodar
 
-Descreva aqui o passo-a-passo que outros usuários precisam realizar para conseguir executar com sucesso o código-fonte
-deste projeto:
+> Os comandos de backend rodam **de dentro de `backend/`** (a descoberta de testes e o `cwd` do
+> Django dependem disso). No Windows use o venv da raiz: `..\.venv\Scripts\python`.
 
-```bash
-echo "olá mundo!"
+### Dev (dois servidores)
+
+```powershell
+# Terminal 1 — backend
+cd backend
+..\.venv\Scripts\python manage.py migrate
+..\.venv\Scripts\python manage.py runserver        # http://127.0.0.1:8000
+
+# Terminal 2 — frontend (proxy /api -> 127.0.0.1:8000)
+cd frontend
+npm run dev
 ```
 
-## Contato
+### Tipo-prod (mesma origem)
 
-O repositório foi originalmente desenvolvido por Fulano: [fulano@ufsm.br]()
+```powershell
+cd frontend
+npm run build                                       # gera frontend/dist
+cd ..\backend
+..\.venv\Scripts\python manage.py runserver         # Django serve o SPA compilado
+```
 
-## Bibliografia
+Sem `frontend/dist`, a rota índice retorna 503 pedindo o build.
 
-Adicione aqui entradas numa lista com a documentação pertinente:
+**Login de dev (seed):** `admin@atlas.com` / `1234`.
 
-* [Documentação coplin-db2](https://pypi.org/project/coplin-db2/)
+**Importar unidades UFSM:** `..\.venv\Scripts\python manage.py import_unidades [caminho_csv]` (CSV em
+UTF-8; upsert por `cod_estruturado`, reexecutável).
 
+## Testes
 
-# Diagrama Entidade-Relacionamento
+```powershell
+cd backend
+..\.venv\Scripts\python manage.py test                                                  # tudo
+..\.venv\Scripts\python manage.py test riscos                                           # um app
+..\.venv\Scripts\python manage.py test riscos.tests.RiscoTests.test_criar_risco_valido  # único
+```
+
+## API
+
+Endpoints sob `/api/` (respostas em camelCase; auth por sessão; soft delete via flag `ativo`):
+
+| Método              | Rota                                  | Descrição                          |
+|---------------------|---------------------------------------|------------------------------------|
+| GET                 | `/api/dashboard/`                     | Resumo do dashboard                |
+| GET / POST          | `/api/riscos/`                        | Listar / criar risco               |
+| GET / PUT / DELETE  | `/api/riscos/<id>/`                   | Detalhe / editar / desativar       |
+| GET / POST          | `/api/usuarios/`                      | Listar / criar usuário             |
+| GET / PUT / DELETE  | `/api/usuarios/<id>/`                 | Detalhe / editar / desativar       |
+| GET                 | `/api/subunidades/`                   | Unidades UFSM                      |
+| GET                 | `/api/subunidades/centros/`           | Centros (siglas)                   |
+| POST                | `/api/auth/login/` `/logout/`         | Login / logout                     |
+| GET                 | `/api/auth/me/`                       | Sessão atual                       |
+| POST                | `/api/auth/password-reset/{request,verify,confirm}/` | Reset de senha por código |
+
+## Diagramas
+
+### Entidade-Relacionamento
 
 ```mermaid
-    erDiagram
-        USUARIO {
+erDiagram
+    USUARIO {
         int id
         string nome
+        string email
+        string telefone
+        string cpf
         string matricula
+        string centro
+        string departamento
+        string cargo
+        date data_nascimento
         string senha
         boolean is_admin
-        int fk_departamento
-    }
-
-    DEPARTAMENTO {
-        int id
-        string nome
+        boolean ativo
     }
 
     RISCO {
         int id
-        string titulo
-        string tipo
-        int impacto
-        int probabilidade
+        string nome
         string descricao
-        int nivel_risco
-        string eficacia_controle
-        int nivel_residual
+        string tipo
+        string departamento
+        string impacto
+        string probabilidade
+        string nivel_de_risco
+        string eficacia_dos_controles
+        string probabilidade_residual
+        string impacto_residual
+        string nivel_residual
+        boolean ativo
         datetime data_criacao
-        int fk_usuario
-        int fk_departamento
+        datetime data_atualizacao
     }
 
     TRATAMENTO {
         int id
         string resposta
         string acao
-        string descricao
         string situacao
-        datetime data_inicio
-        datetime data_fim
+        date data_inicio
+        date data_fim
+        boolean ativo
         datetime data_criacao
+        datetime data_atualizacao
         int fk_risco
-        int fk_usuario
+        int fk_usuario_responsavel
     }
 
-    SETORES {
+    SUBUNIDADE {
         int id
+        string cod_estruturado
         string nome
-        int fk_departamento
+        string centro_nome
+        string centro_sigla
+        string tipo
+        string situacao
+        boolean ativo
     }
 
-    %% RELACIONAMENTOS
-    DEPARTAMENTO ||--o{ USUARIO : possui
-    USUARIO ||--o{ RISCO : cria
-    DEPARTAMENTO ||--o{ RISCO : associado
-    RISCO ||--o{ TRATAMENTO : possui
-    DEPARTAMENTO ||--o{ SETORES : associado
-    SETORES ||--o{ SETORES : subSetor
+    RISCO   ||--o{ TRATAMENTO : possui
+    USUARIO ||--o{ TRATAMENTO : "responsável (opcional)"
 ```
 
+> `SUBUNIDADE` não tem FK física: alimenta os selects de centro/departamento via API; em
+> `USUARIO`/`RISCO`, `centro` (sigla) e `departamento` (nome da unidade) são guardados como string.
 
-# Diagrama de caso de uso
-
-![Diagrama de Caso de Uso](imagens/Diagrama_caso_de_uso.jpeg)
-
-# Diagrama de classes
+### Classes
 
 ```mermaid
 classDiagram
-    class Usuario
-    class Departamento
-    class Risco
-    class Tratamento
-    class Setores
+    class Usuario {
+        -int id
+        -string nome
+        -string email
+        -string matricula
+        -string centro
+        -string departamento
+        -string cargo
+        -string senha
+        -boolean is_admin
+        -boolean ativo
+        +autenticar()
+        +criarUsuario()
+        +editarUsuario()
+        +listarUsuarios()
+        +detalhesUsuario()
+        +desativarUsuario()
+    }
 
-    Usuario : -int id
-    Usuario : -string nome
-    Usuario : -string matricula
-    Usuario : -string senha
-    Usuario : -boolean is_admin
-    Usuario : -int fk_departamento
+    class Risco {
+        -int id
+        -string nome
+        -string descricao
+        -string tipo
+        -string departamento
+        -string impacto
+        -string probabilidade
+        -string nivel_de_risco
+        -string eficacia_dos_controles
+        -string nivel_residual
+        -boolean ativo
+        +criarRisco()
+        +editarRisco()
+        +listarRiscos()
+        +detalhesRisco()
+        +desativarRisco()
+        +calcularNivelRisco()
+    }
 
-    Usuario : +autenticar()
-    Usuario : +criarUsuario()
-    Usuario : +editarUsuario()
-    Usuario : +listarUsuarios()
-    Usuario : +detalhesUsuario()
-    Usuario : +desativarUsuario()
+    class Tratamento {
+        -int id
+        -string resposta
+        -string acao
+        -string situacao
+        -date data_inicio
+        -date data_fim
+        -boolean ativo
+        +criarTratamento()
+        +editarTratamento()
+        +listarTratamentos()
+        +detalhesTratamento()
+        +desativarTratamento()
+    }
 
-    Departamento : -int id
-    Departamento : -string nome
+    class Subunidade {
+        -int id
+        -string cod_estruturado
+        -string nome
+        -string centro_nome
+        -string centro_sigla
+        -string tipo
+        -string situacao
+        -boolean ativo
+        +listarSubunidades()
+        +listarCentros()
+    }
 
-    Departamento : +criarDepartamento()
-    Departamento : +listarDepartamentos()
-    Departamento : +editarDepartamento()
-    Departamento : +detalhesDepartamento()
-    Departamento : +desativarDepartamento()
-    Departamento : +designarDepartamento()
-
-    Risco : -int id
-    Risco : -string titulo
-    Risco : -string tipo
-    Risco : -int impacto
-    Risco : -int probabilidade
-    Risco : -string descricao
-    Risco : -int nivel_risco
-    Risco : -string eficacia_controle
-    Risco : -int nivel_residual
-    Risco : -datetime data_criacao
-    Risco : -int fk_departamento
-    Risco : -int fk_usuario
-
-    Risco : +criarRisco()
-    Risco : +editarRisco()
-    Risco : +desativarRisco()
-    Risco : +listarRiscos()
-    Risco : +detalhesRisco()
-    Risco : +calcularNivelRisco()
-    Risco : +avaliarImpacto()
-
-    Tratamento : -int id
-    Tratamento : -string resposta
-    Tratamento : -string acao
-    Tratamento : -string descricao
-    Tratamento : -string situacao
-    Tratamento : -datetime data_inicio
-    Tratamento : -datetime data_fim
-    Tratamento : -datetime data_criacao
-    Tratamento : -int fk_risco
-    Tratamento : -int fk_usuario
-
-    Tratamento : +criarTratamento()
-    Tratamento : +editarTratamento()
-    Tratamento : +listarTratamentos()
-    Tratamento : +desativarTratamento()
-    Tratamento : +detalhesTratamento()
-
-    Setores : -int id
-    Setores : -string nome
-    Setores : -int fk_departamento
-
-    Setores : +criarSetor()
-    Setores : +editarSetor()
-    Setores : +desativarSetor()
-    Setores : +listarSetores()
-    Setores : +detalhesSetor()
-    Setores : +criarSubSetor()
-
-    Usuario "1" --> "0..*" Departamento
-    Departamento "1" --> "0..*" Usuario
-
-    Risco --> Departamento : associado
-    Risco "1" --> "0..*" Tratamento
-    Tratamento --> Risco
-
-    Usuario --> Risco : identifica
-
-    Departamento "1" -- "0..*" Setores : associado
-    Setores "1" -- "0..*" Setores : subSetor
+    Risco "1" --> "0..*" Tratamento : possui
+    Usuario "1" --> "0..*" Tratamento : responsável
 ```
+
+### Caso de uso
+
+![Diagrama de Caso de Uso](imagens/Diagrama_caso_de_uso.jpeg)
+
+## Desenvolvedores
+
+* Andrei Cecatto
+* Arthur Novak
+* Jackson Moraes
+* Lorenzo dos Reis Marty
+
+## Bibliografia
+
+* [Documentação do Django](https://docs.djangoproject.com/)
+* [Documentação do Vite](https://vite.dev/)
+* [Documentação do React](https://react.dev/)
