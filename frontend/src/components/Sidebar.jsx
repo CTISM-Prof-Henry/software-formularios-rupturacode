@@ -1,4 +1,12 @@
-import { FileText, LayoutDashboard, LogOut, PlusCircle, ShieldCheck, Users } from 'lucide-react'
+import {
+  FileText,
+  LayoutDashboard,
+  ListChecks,
+  LogOut,
+  PlusCircle,
+  ShieldCheck,
+  Users,
+} from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
 
@@ -6,6 +14,7 @@ const navItems = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Riscos', to: '/riscos', icon: FileText },
   { label: 'Novo risco', to: '/riscos/novo', icon: PlusCircle },
+  { label: 'Meus tratamentos', to: '/meus-tratamentos', icon: ListChecks },
   { label: 'Usuarios', to: '/usuarios', icon: Users },
 ]
 

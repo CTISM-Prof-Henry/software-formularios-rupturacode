@@ -5,6 +5,7 @@ from core.api_views import dashboard_summary
 from core.views import frontend_index
 from riscos.api_views import riscos_collection, riscos_detail
 from subunidade.api_views import subunidades_centros, subunidades_collection
+from tratamentos.api_views import tratamentos_collection, tratamentos_detail
 from usuario.api_views import (
     auth_login,
     auth_logout,
@@ -21,6 +22,8 @@ urlpatterns = [
     path("api/dashboard/", dashboard_summary, name="api_dashboard_summary"),
     path("api/riscos/", riscos_collection, name="api_riscos_collection"),
     path("api/riscos/<int:risco_id>/", riscos_detail, name="api_riscos_detail"),
+    path("api/tratamentos/", tratamentos_collection, name="api_tratamentos_collection"),
+    path("api/tratamentos/<int:tratamento_id>/", tratamentos_detail, name="api_tratamentos_detail"),
     path("api/usuarios/", usuarios_collection, name="api_usuarios_collection"),
     path("api/usuarios/<int:usuario_id>/", usuarios_detail, name="api_usuarios_detail"),
     path("api/subunidades/", subunidades_collection, name="api_subunidades_collection"),

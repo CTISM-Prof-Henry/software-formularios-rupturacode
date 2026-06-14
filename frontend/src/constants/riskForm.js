@@ -1,3 +1,5 @@
+import { impactScale, probabilityScale } from './riskScale.js'
+
 export const riskTypeOptions = [
   'Operacional',
   'Financeiro',
@@ -6,13 +8,10 @@ export const riskTypeOptions = [
   'Segurança da informação',
 ]
 
-export const probabilityOptions = ['Muito Baixa', 'Baixa', 'Média', 'Alta', 'Muito Alta']
-export const impactOptions = ['Insignificante', 'Pequeno', 'Moderado', 'Grande', 'Catastrófico']
-export const riskLevelOptions = ['BAIXO', 'MODERADO', 'ALTO', 'CRÍTICO']
+export const probabilityOptions = probabilityScale.map((o) => o.label)
+export const impactOptions = impactScale.map((o) => o.label)
+export const riskLevelOptions = ['BAIXO', 'MODERADO', 'ALTO', 'EXTREMO']
 export const controlOptions = ['Eficaz', 'Parcialmente eficaz', 'Ineficaz']
-export const residualOptions = ['BAIXO', 'MÉDIO', 'ALTO', 'CRÍTICO']
-export const responseOptions = ['Mitigar / Reduzir', 'Aceitar', 'Transferir', 'Evitar']
-export const statusOptions = ['Não Iniciado', 'Em andamento', 'Concluído', 'Suspenso']
 
 export const riskFormDefaults = {
   actionPlan: '',
@@ -22,8 +21,11 @@ export const riskFormDefaults = {
   impact: 'Insignificante',
   internalControls: 'Ineficaz',
   probability: 'Muito Baixa',
-  residualLevel: 'ALTO',
-  riskLevel: 'CRÍTICO',
+  // riskLevel/residualLevel são derivados de Probabilidade x Impacto (read-only).
+  probabilityResidual: '',
+  impactResidual: '',
+  residualLevel: '',
+  riskLevel: '',
   riskResponse: 'Mitigar / Reduzir',
   riskType: '',
   startDate: '',

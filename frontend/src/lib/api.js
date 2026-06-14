@@ -58,6 +58,27 @@ export function deleteRisco(id) {
   return request(`/api/riscos/${id}/`, { method: 'DELETE' })
 }
 
+// Tratamentos ----------------------------------------------------------------
+export function getTratamentos(params) {
+  return request(`/api/tratamentos/${buildQuery(params)}`)
+}
+
+export function getTratamento(id) {
+  return request(`/api/tratamentos/${id}/`)
+}
+
+export function createTratamento(payload) {
+  return request('/api/tratamentos/', { body: JSON.stringify(payload), method: 'POST' })
+}
+
+export function updateTratamento(id, payload) {
+  return request(`/api/tratamentos/${id}/`, { body: JSON.stringify(payload), method: 'PUT' })
+}
+
+export function deleteTratamento(id) {
+  return request(`/api/tratamentos/${id}/`, { method: 'DELETE' })
+}
+
 // Usuarios -------------------------------------------------------------------
 export function getUsuarios(params) {
   return request(`/api/usuarios/${buildQuery(params)}`)
@@ -73,6 +94,10 @@ export function createUsuario(payload) {
 
 export function updateUsuario(id, payload) {
   return request(`/api/usuarios/${id}/`, { body: JSON.stringify(payload), method: 'PUT' })
+}
+
+export function deleteUsuario(id) {
+  return request(`/api/usuarios/${id}/`, { method: 'DELETE' })
 }
 
 // Subunidades (unidades UFSM) ------------------------------------------------

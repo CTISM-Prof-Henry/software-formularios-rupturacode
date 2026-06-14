@@ -4,13 +4,30 @@ from django.core.exceptions import ValidationError
 from django.test import TestCase
 from django.urls import reverse
 
+from usuario.models import Usuario
+
 from .models import Risco
 from .test_helpers import dados_risco_padrao
 
 
 class RiscoTests(TestCase):
+    def setUp(self):
+        # A API exige sessao; autentica o client de teste.
+        usuario = Usuario.objects.create(
+            nome="Auth", email="auth@atlas.com", matricula="999",
+            departamento="TI", cargo="Analista",
+        )
+        session = self.client.session
+        session["usuario_id"] = usuario.id
+        session.save()
+
     def dados_risco(self, **kwargs):
         return dados_risco_padrao(**kwargs)
+
+    def test_sem_sessao_retorna_401(self):
+        sem_auth = self.client_class()
+        response = sem_auth.get(reverse("api_riscos_collection"))
+        self.assertEqual(response.status_code, 401)
 
     def criar_risco(self, **kwargs):
         return Risco.objects.create(**self.dados_risco(**kwargs))
@@ -157,6 +174,30 @@ class RiscoTests(TestCase):
     def test_detalhe_risco_inexistente_retorna_404(self):
         url = reverse("api_riscos_detail", args=[999])
         self.assertEqual(self.client.get(url).status_code, 404)
+
+    # Test risco residual (Fase 4)
+    def test_nivel_residual_calculado_no_endpoint(self):
+        url = reverse("api_riscos_collection")
+        payload = self.dados_risco(
+            probability="Muito Baixa",
+            impact="Insignificante",
+            probabilityResidual="Muito Baixa",
+            impactResidual="Insignificante",
+        )
+        response = self.client.post(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(response.json()["nivelResidual"], "BAIXO")
+        self.assertEqual(response.json()["scoreResidual"], 1)
+
+    def test_criar_risco_sem_residual_ok(self):
+        url = reverse("api_riscos_collection")
+        payload = self.dados_risco(nivel_residual="", residualLevel="")
+        response = self.client.post(
+            url, data=json.dumps(payload), content_type="application/json"
+        )
+        self.assertEqual(response.status_code, 201)
 
     def test_listar_riscos_valido_endpoint(self):
         self.criar_risco(nome="Risco 1")

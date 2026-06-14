@@ -551,6 +551,36 @@ button:disabled {
   grid-template-columns: 1fr 1fr 1fr 1fr 1fr;
 }
 
+.four-columns {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.three-columns {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.section-hint {
+  color: var(--muted-2);
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.risk-form-matrix {
+  margin-top: 16px;
+  max-width: 560px;
+}
+
+.reassess-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #b45309;
+  background: #fef3c7;
+}
+
 .treatment-grid {
   grid-template-columns: repeat(12, minmax(0, 1fr));
 }
@@ -655,6 +685,34 @@ select option:disabled {
 .residual-select option {
   background: var(--surface);
   color: var(--text);
+}
+
+/* Botão da coluna "Com Tratamento" leva aos tratamentos do risco. */
+.treatment-link {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  display: inline-flex;
+  border-radius: 6px;
+}
+
+.treatment-link:hover {
+  background: var(--surface-muted);
+}
+
+/* Nível de risco calculado (read-only) a partir de Probabilidade x Impacto. */
+.computed-level {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+}
+
+.computed-level-score {
+  font-weight: 700;
+  color: var(--muted-2);
+  font-size: 0.85rem;
 }
 
 textarea {
@@ -1091,6 +1149,8 @@ textarea[aria-invalid="true"] {
   }
 
   .five-columns,
+  .four-columns,
+  .three-columns,
   .treatment-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -1137,6 +1197,8 @@ textarea[aria-invalid="true"] {
   .metric-grid,
   .two-columns,
   .five-columns,
+  .four-columns,
+  .three-columns,
   .treatment-grid {
     grid-template-columns: 1fr;
   }

@@ -43,6 +43,10 @@ dist/
 # Claude (instruções e registros — não versionar)
 /CLAUDE.md
 /claude/
+/.claude/
+
+# graphify (grafo de conhecimento — gerado, não versionar)
+/graphify-out/
 
 # Editors and OS files
 .vscode/

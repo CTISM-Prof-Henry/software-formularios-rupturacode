@@ -4,7 +4,17 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
+from core.auth import login_required_session
+
 from .models import Risco
+from .scoring import nivel_de_risco, score as risk_score
+
+
+def _reavaliacao_pendente(risco):
+    # Ha tratamento concluido mas o risco ainda nao teve o residual reavaliado.
+    concluido = risco.tratamentos.filter(ativo=True, situacao="concluido").exists()
+    sem_residual = not (risco.probabilidade_residual and risco.impacto_residual)
+    return concluido and sem_residual
 
 
 def _risk_to_dict(risco):
@@ -16,9 +26,15 @@ def _risk_to_dict(risco):
         "departamento": risco.departamento,
         "impacto": risco.impacto,
         "probabilidade": risco.probabilidade,
+        "score": risk_score(risco.probabilidade, risco.impacto),
         "nivelDeRisco": risco.nivel_de_risco,
         "eficaciaDosControles": risco.eficacia_dos_controles,
+        "probabilidadeResidual": risco.probabilidade_residual,
+        "impactoResidual": risco.impacto_residual,
+        "scoreResidual": risk_score(risco.probabilidade_residual, risco.impacto_residual),
         "nivelResidual": risco.nivel_residual,
+        "comTratamento": risco.tratamentos.filter(ativo=True).exists(),
+        "reavaliacaoPendente": _reavaliacao_pendente(risco),
         "ativo": risco.ativo,
         "dataCriacao": risco.data_criacao.isoformat(),
         "dataAtualizacao": risco.data_atualizacao.isoformat(),
@@ -26,17 +42,33 @@ def _risk_to_dict(risco):
 
 
 def _payload_to_risk_fields(payload):
+    impacto = payload.get("impacto") or payload.get("impact", "")
+    probabilidade = payload.get("probabilidade") or payload.get("probability", "")
+    # Nivel e calculado no servidor (prob x impacto); so cai no valor enviado
+    # quando os eixos sao texto legado fora da escala 1-5 (compatibilidade).
+    nivel_calculado = nivel_de_risco(probabilidade, impacto)
+    impacto_residual = payload.get("impacto_residual") or payload.get("impactResidual", "")
+    probabilidade_residual = (
+        payload.get("probabilidade_residual") or payload.get("probabilityResidual", "")
+    )
+    nivel_residual_calculado = nivel_de_risco(probabilidade_residual, impacto_residual)
     return {
         "nome": payload.get("nome") or payload.get("identifiedRisk", "")[:100],
         "descricao": payload.get("descricao") or payload.get("identifiedRisk", ""),
         "tipo": payload.get("tipo") or payload.get("riskType", ""),
         "departamento": payload.get("departamento") or payload.get("department", ""),
-        "impacto": payload.get("impacto") or payload.get("impact", ""),
-        "probabilidade": payload.get("probabilidade") or payload.get("probability", ""),
-        "nivel_de_risco": payload.get("nivel_de_risco") or payload.get("riskLevel", ""),
+        "impacto": impacto,
+        "probabilidade": probabilidade,
+        "nivel_de_risco": nivel_calculado
+        or payload.get("nivel_de_risco")
+        or payload.get("riskLevel", ""),
         "eficacia_dos_controles": payload.get("eficacia_dos_controles")
         or payload.get("internalControls", ""),
-        "nivel_residual": payload.get("nivel_residual") or payload.get("residualLevel", ""),
+        "probabilidade_residual": probabilidade_residual,
+        "impacto_residual": impacto_residual,
+        "nivel_residual": nivel_residual_calculado
+        or payload.get("nivel_residual")
+        or payload.get("residualLevel", ""),
     }
 
 
@@ -50,7 +82,6 @@ def _validate(fields):
         "probabilidade",
         "nivel_de_risco",
         "eficacia_dos_controles",
-        "nivel_residual",
     ]
 
     return {
@@ -60,6 +91,7 @@ def _validate(fields):
     }
 
 
+@login_required_session
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def riscos_collection(request):
@@ -82,6 +114,7 @@ def riscos_collection(request):
     return JsonResponse(_risk_to_dict(risco), status=201)
 
 
+@login_required_session
 @csrf_exempt
 @require_http_methods(["GET", "PUT", "DELETE"])
 def riscos_detail(request, risco_id):

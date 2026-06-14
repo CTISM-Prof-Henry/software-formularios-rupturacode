@@ -8,6 +8,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 
+from core.auth import login_required_session
+
 from .models import Usuario
 
 RESET_CODE_TTL = 600  # 10 minutos
@@ -63,6 +65,7 @@ def _parse_body(request):
         return None, JsonResponse({"errors": {"body": "JSON invalido."}}, status=400)
 
 
+@login_required_session
 @csrf_exempt
 @require_http_methods(["GET", "POST"])
 def usuarios_collection(request):
@@ -106,6 +109,7 @@ def usuarios_collection(request):
     return JsonResponse(_user_to_dict(usuario), status=201)
 
 
+@login_required_session
 @csrf_exempt
 @require_http_methods(["GET", "PUT", "DELETE"])
 def usuarios_detail(request, usuario_id):

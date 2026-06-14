@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Check, Pencil, Plus, X } from 'lucide-react'
+import { Check, Pencil, Plus, Trash2, X } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { pageVariants } from '../animations/pageAnimations.js'
 import FilterBar from '../components/FilterBar.jsx'
 import LevelChip from '../components/LevelChip.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import { impactOptions, riskLevelOptions, riskTypeOptions } from '../constants/riskForm.js'
-import { getRiscos } from '../lib/api.js'
+import { deleteRisco, getRiscos } from '../lib/api.js'
 
 function RiskList() {
   const navigate = useNavigate()
@@ -18,6 +18,15 @@ function RiskList() {
   const [nivel, setNivel] = useState('')
   const [impacto, setImpacto] = useState('')
   const [applied, setApplied] = useState({ busca: '', tipo: '', nivel: '', impacto: '' })
+
+  function carregar() {
+    return getRiscos()
+      .then((data) => {
+        setRiscos(data.results || [])
+        setStatus('loaded')
+      })
+      .catch(() => setStatus('offline'))
+  }
 
   useEffect(() => {
     let ignore = false
@@ -39,6 +48,13 @@ function RiskList() {
       ignore = true
     }
   }, [])
+
+  function handleDelete(risco) {
+    if (!window.confirm(`Remover o risco "${risco.nome || risco.descricao}"?`)) {
+      return
+    }
+    deleteRisco(risco.id).then(carregar).catch(() => setStatus('offline'))
+  }
 
   const filtered = useMemo(() => {
     return riscos.filter((risco) => {
@@ -100,7 +116,7 @@ function RiskList() {
                 <th>Impacto</th>
                 <th>Nível</th>
                 <th>Com Tratamento</th>
-                <th className="col-action">Editar</th>
+                <th className="col-action">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -120,13 +136,27 @@ function RiskList() {
                   <td>{risco.tipo}</td>
                   <td>{risco.probabilidade}</td>
                   <td>{risco.impacto}</td>
-                  <td><LevelChip level={risco.nivelDeRisco} /></td>
-                  <td className="col-center">
-                    {risco.comTratamento ? (
-                      <Check size={16} className="icon-yes" />
-                    ) : (
-                      <X size={16} className="icon-no" />
+                  <td>
+                    <LevelChip level={risco.nivelDeRisco} />
+                    {risco.reavaliacaoPendente && (
+                      <span className="reassess-tag" title="Tratamento concluído — reavalie o risco residual">
+                        Reavaliar
+                      </span>
                     )}
+                  </td>
+                  <td className="col-center">
+                    <button
+                      aria-label={`Tratamentos de ${risco.nome || risco.descricao}`}
+                      className="treatment-link"
+                      onClick={() => navigate(`/riscos/${risco.id}/tratamentos`)}
+                      type="button"
+                    >
+                      {risco.comTratamento ? (
+                        <Check size={16} className="icon-yes" />
+                      ) : (
+                        <X size={16} className="icon-no" />
+                      )}
+                    </button>
                   </td>
                   <td className="col-action">
                     <button
@@ -136,6 +166,14 @@ function RiskList() {
                       type="button"
                     >
                       <Pencil size={16} />
+                    </button>
+                    <button
+                      aria-label={`Remover ${risco.nome || risco.descricao}`}
+                      className="icon-button"
+                      onClick={() => handleDelete(risco)}
+                      type="button"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>

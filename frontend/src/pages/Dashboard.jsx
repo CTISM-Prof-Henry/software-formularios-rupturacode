@@ -1,12 +1,13 @@
 import { useMemo } from 'react'
 import { motion } from 'framer-motion'
 import { AlertTriangle, Eye, FileBarChart, Shield, Siren, Target } from 'lucide-react'
+import { useNavigate } from 'react-router-dom'
 import { buttonTap, itemVariants, pageVariants } from '../animations/pageAnimations.js'
 import MetricCard from '../components/MetricCard.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import RiskBars from '../components/RiskBars.jsx'
 import RiskHeatmap from '../components/RiskHeatmap.jsx'
-import { dashboardMetricConfig, riskBars } from '../constants/dashboard.js'
+import { buildRiskBars, dashboardMetricConfig } from '../constants/dashboard.js'
 import { useDashboardSummary } from '../hooks/useDashboardSummary.js'
 
 const metricIcons = {
@@ -17,6 +18,7 @@ const metricIcons = {
 }
 
 function Dashboard({ onNewRisk }) {
+  const navigate = useNavigate()
   const { status, summary } = useDashboardSummary()
 
   const metrics = useMemo(
@@ -26,6 +28,11 @@ function Dashboard({ onNewRisk }) {
         icon: metricIcons[metric.icon],
         value: summary[metric.valueKey],
       })),
+    [summary],
+  )
+
+  const riskBars = useMemo(
+    () => buildRiskBars(summary.distribuicaoPorNivel),
     [summary],
   )
 
@@ -39,7 +46,7 @@ function Dashboard({ onNewRisk }) {
       <PageHeader
         actions={
           <>
-            <button className="secondary-button" type="button">
+            <button className="secondary-button" onClick={() => navigate('/riscos')} type="button">
               <Eye size={16} />
               Veja os riscos
             </button>

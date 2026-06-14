@@ -21,6 +21,8 @@ export function useDashboardSummary() {
             riscosAltoImpacto: data.riscosAltoImpacto ?? 0,
             riscosComTratamento: data.riscosComTratamento ?? 0,
             totalRiscos: data.totalRiscos ?? 0,
+            distribuicaoPorNivel:
+              data.distribuicaoPorNivel ?? fallbackSummary.distribuicaoPorNivel,
           })
           setStatus('loaded')
         }

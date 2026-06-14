@@ -1,6 +1,8 @@
 from django.http import JsonResponse
 from django.views.decorators.http import require_GET
 
+from core.auth import login_required_session
+
 from .models import Subunidade
 
 
@@ -16,6 +18,7 @@ def _unidade_to_dict(unidade):
     }
 
 
+@login_required_session
 @require_GET
 def subunidades_centros(request):
     centros = (
@@ -34,6 +37,7 @@ def subunidades_centros(request):
     return JsonResponse({"results": list(vistos.values())})
 
 
+@login_required_session
 @require_GET
 def subunidades_collection(request):
     unidades = Subunidade.objects.filter(ativo=True)

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { Pencil, Plus } from 'lucide-react'
+import { Pencil, Plus, Trash2 } from 'lucide-react'
 import { useNavigate } from 'react-router-dom'
 import { pageVariants } from '../animations/pageAnimations.js'
 import FilterBar from '../components/FilterBar.jsx'
@@ -8,7 +8,7 @@ import PageHeader from '../components/PageHeader.jsx'
 import StatusChip from '../components/StatusChip.jsx'
 import { useCentros } from '../hooks/useCentros.js'
 import { cargoOptions } from '../constants/userForm.js'
-import { getUsuarios } from '../lib/api.js'
+import { deleteUsuario, getUsuarios } from '../lib/api.js'
 
 function UserList() {
   const navigate = useNavigate()
@@ -50,6 +50,15 @@ function UserList() {
   function applyFilters() {
     setStatus('loading')
     runFetch({ busca, cargo, centro })
+  }
+
+  function handleDelete(usuario) {
+    if (!window.confirm(`Remover o usuário "${usuario.nome}"?`)) {
+      return
+    }
+    deleteUsuario(usuario.id)
+      .then(() => runFetch({ busca, cargo, centro }))
+      .catch(() => setStatus('offline'))
   }
 
   return (
@@ -98,7 +107,7 @@ function UserList() {
                 <th>Departamento</th>
                 <th>Cargo</th>
                 <th>Status</th>
-                <th className="col-action">Editar</th>
+                <th className="col-action">Ações</th>
               </tr>
             </thead>
             <tbody>
@@ -123,11 +132,18 @@ function UserList() {
                     <button
                       aria-label={`Editar ${usuario.nome}`}
                       className="icon-button"
-                      disabled
-                      title="Edição de usuário em breve"
+                      onClick={() => navigate(`/usuarios/${usuario.id}/editar`)}
                       type="button"
                     >
                       <Pencil size={16} />
+                    </button>
+                    <button
+                      aria-label={`Remover ${usuario.nome}`}
+                      className="icon-button"
+                      onClick={() => handleDelete(usuario)}
+                      type="button"
+                    >
+                      <Trash2 size={16} />
                     </button>
                   </td>
                 </tr>

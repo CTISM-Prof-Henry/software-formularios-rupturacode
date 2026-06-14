@@ -1,6 +1,8 @@
 from django.test import TestCase
 from django.urls import reverse
 
+from usuario.models import Usuario
+
 from .models import Subunidade
 
 
@@ -33,6 +35,13 @@ class SubunidadeModelTest(TestCase):
 
 class SubunidadeApiTests(TestCase):
     def setUp(self):
+        usuario = Usuario.objects.create(
+            nome="Auth", email="auth_sub@atlas.com", matricula="9100",
+            departamento="TI", cargo="Analista",
+        )
+        session = self.client.session
+        session["usuario_id"] = usuario.id
+        session.save()
         criar_unidade(cod_estruturado="07.67.00.00.0.0", nome="Computacao Aplicada", centro_sigla="CT")
         criar_unidade(cod_estruturado="07.37.00.00.0.0", nome="Eletromecanica", centro_sigla="CT")
         criar_unidade(

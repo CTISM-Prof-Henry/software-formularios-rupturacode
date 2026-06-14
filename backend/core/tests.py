@@ -11,6 +11,16 @@ from usuario.models import Usuario
 
 
 class DashboardTests(TestCase):
+    def setUp(self):
+        # O endpoint do dashboard exige sessao.
+        usuario = Usuario.objects.create(
+            nome="Auth", email="auth_dash@atlas.com", matricula="9200",
+            departamento="TI", cargo="Analista",
+        )
+        session = self.client.session
+        session["usuario_id"] = usuario.id
+        session.save()
+
     def criar_usuario(self):
         return Usuario.objects.create(
             nome="Usuario Teste",

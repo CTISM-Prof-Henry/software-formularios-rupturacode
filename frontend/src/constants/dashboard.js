@@ -1,8 +1,11 @@
+import { levels } from './riskScale.js'
+
 export const fallbackSummary = {
-  totalRiscos: 248,
-  riscosAltoImpacto: 12,
-  riscosComTratamento: 186,
-  novosRiscos: 31,
+  totalRiscos: 0,
+  riscosAltoImpacto: 0,
+  riscosComTratamento: 0,
+  novosRiscos: 0,
+  distribuicaoPorNivel: { BAIXO: 0, MODERADO: 0, ALTO: 0, EXTREMO: 0 },
 }
 
 export const dashboardMetricConfig = [
@@ -12,9 +15,25 @@ export const dashboardMetricConfig = [
   { icon: 'chart', label: 'Novos riscos', tone: 'blue', valueKey: 'novosRiscos' },
 ]
 
-export const riskBars = [
-  { label: 'Extremo', cases: '12 casos', width: 13, color: '#dc2626' },
-  { label: 'Alto', cases: '42 casos', width: 38, color: '#f59e0b' },
-  { label: 'Moderado', cases: '94 casos', width: 66, color: '#facc15' },
-  { label: 'Baixo', cases: '100 casos', width: 74, color: '#86c66f' },
+// Ordem de exibição das barras por nível (cor vem da escala única).
+const barConfig = [
+  { key: 'EXTREMO', label: 'Extremo' },
+  { key: 'ALTO', label: 'Alto' },
+  { key: 'MODERADO', label: 'Moderado' },
+  { key: 'BAIXO', label: 'Baixo' },
 ]
+
+// Monta os itens do RiskBars a partir da distribuição por nível vinda da API.
+export function buildRiskBars(distribuicao = {}) {
+  const valores = barConfig.map(({ key }) => distribuicao[key] || 0)
+  const maximo = Math.max(1, ...valores)
+  return barConfig.map(({ key, label }) => {
+    const total = distribuicao[key] || 0
+    return {
+      label,
+      cases: `${total} ${total === 1 ? 'caso' : 'casos'}`,
+      width: Math.round((total / maximo) * 100),
+      color: levels[key].color,
+    }
+  })
+}

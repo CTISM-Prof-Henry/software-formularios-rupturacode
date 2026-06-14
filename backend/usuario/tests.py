@@ -104,7 +104,18 @@ class UsuarioApiTests(TestCase):
     def _post(self, url, payload):
         return self.client.post(url, data=json.dumps(payload), content_type="application/json")
 
+    def _autenticar(self):
+        # Endpoints de usuarios exigem sessao.
+        usuario = Usuario.objects.create(
+            nome="Auth", email="auth_api@atlas.com", matricula="9001",
+            departamento="TI", cargo="Analista",
+        )
+        session = self.client.session
+        session["usuario_id"] = usuario.id
+        session.save()
+
     def test_criar_usuario_via_api(self):
+        self._autenticar()
         response = self._post(
             reverse("api_usuarios_collection"),
             {
@@ -122,6 +133,7 @@ class UsuarioApiTests(TestCase):
         self.assertNotEqual(usuario.senha, "segredo")
 
     def test_criar_usuario_sem_campos_obrigatorios(self):
+        self._autenticar()
         response = self._post(reverse("api_usuarios_collection"), {"nome": "X"})
         self.assertEqual(response.status_code, 400)
         self.assertIn("email", response.json()["errors"])

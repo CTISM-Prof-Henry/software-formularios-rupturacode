@@ -14,6 +14,8 @@ function riscoToForm(risco) {
     impact: risco.impacto || riskFormDefaults.impact,
     riskLevel: risco.nivelDeRisco || riskFormDefaults.riskLevel,
     internalControls: risco.eficaciaDosControles || riskFormDefaults.internalControls,
+    probabilityResidual: risco.probabilidadeResidual || '',
+    impactResidual: risco.impactoResidual || '',
     residualLevel: risco.nivelResidual || riskFormDefaults.residualLevel,
   }
 }

@@ -1,10 +1,18 @@
 import { useEffect, useRef } from 'react'
 import { GridComponent, TooltipComponent, VisualMapComponent } from 'echarts/components'
 import * as echarts from 'echarts/core'
-import { HeatmapChart } from 'echarts/charts'
+import { HeatmapChart, ScatterChart } from 'echarts/charts'
 import { CanvasRenderer } from 'echarts/renderers'
+import { impactScale, levels, probabilityScale, scaleValue } from '../constants/riskScale.js'
 
-echarts.use([GridComponent, HeatmapChart, TooltipComponent, VisualMapComponent, CanvasRenderer])
+echarts.use([
+  GridComponent,
+  HeatmapChart,
+  ScatterChart,
+  TooltipComponent,
+  VisualMapComponent,
+  CanvasRenderer,
+])
 
 const probabilities = ['Improvável', 'Rara', 'Possível', 'Provável', 'Praticamente\nCerta']
 const impacts = ['1', '2', '3', '4', '5']
@@ -48,10 +56,10 @@ const cells = [
 ]
 
 const colors = {
-  low: '#86c66f',
-  medium: '#facc15',
-  high: '#f59e0b',
-  extreme: '#dc2626',
+  low: levels.BAIXO.color,
+  medium: levels.MODERADO.color,
+  high: levels.ALTO.color,
+  extreme: levels.EXTREMO.color,
 }
 
 const heatmapData = cells.flatMap((row, yIndex) =>
@@ -63,6 +71,49 @@ const heatmapData = cells.flatMap((row, yIndex) =>
     },
   })),
 )
+
+// Converte um marcador (probabilidade/impacto em rótulo) para coordenadas da matriz.
+function markerToPoint(marker) {
+  const p = scaleValue(probabilityScale, marker.probability)
+  const i = scaleValue(impactScale, marker.impact)
+  if (!p || !i) {
+    return null
+  }
+  return {
+    value: [p - 1, i - 1],
+    name: marker.label,
+    symbol: marker.kind === 'residual' ? 'circle' : 'pin',
+    symbolSize: marker.kind === 'residual' ? 18 : 28,
+    itemStyle: {
+      color: marker.kind === 'residual' ? '#ffffff' : '#0f172a',
+      borderColor: '#0f172a',
+      borderWidth: 2,
+    },
+  }
+}
+
+function buildMarkerSeries(markers) {
+  const points = (markers || []).map(markerToPoint).filter(Boolean)
+  if (points.length === 0) {
+    return []
+  }
+  return [
+    {
+      type: 'scatter',
+      data: points,
+      label: {
+        show: true,
+        position: 'top',
+        color: '#0f172a',
+        fontSize: 11,
+        fontWeight: 700,
+        formatter: ({ name }) => name,
+      },
+      tooltip: { formatter: ({ name }) => name },
+      z: 5,
+    },
+  ]
+}
 
 const option = {
   animation: false,
@@ -147,8 +198,9 @@ const option = {
   ],
 }
 
-function RiskHeatmap() {
+function RiskHeatmap({ markers }) {
   const chartRef = useRef(null)
+  const markersKey = JSON.stringify(markers || [])
 
   useEffect(() => {
     if (!chartRef.current) {
@@ -157,7 +209,10 @@ function RiskHeatmap() {
 
     echarts.getInstanceByDom(chartRef.current)?.dispose()
     const chart = echarts.init(chartRef.current)
-    chart.setOption(option)
+    chart.setOption({
+      ...option,
+      series: [...option.series, ...buildMarkerSeries(markers)],
+    })
 
     const handleResize = () => chart.resize()
     window.addEventListener('resize', handleResize)
@@ -166,7 +221,9 @@ function RiskHeatmap() {
       window.removeEventListener('resize', handleResize)
       chart.dispose()
     }
-  }, [])
+    // markersKey serializa os marcadores para re-renderizar quando mudam.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [markersKey])
 
   return (
     <div className="risk-heatmap-layout">

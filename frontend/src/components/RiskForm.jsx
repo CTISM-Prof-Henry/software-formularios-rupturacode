@@ -6,19 +6,18 @@ import { buttonTap, itemVariants, pageVariants } from '../animations/pageAnimati
 import FormFeedback from './FormFeedback.jsx'
 import FormField from './FormField.jsx'
 import FormSection from './FormSection.jsx'
+import LevelChip from './LevelChip.jsx'
 import PageHeader from './PageHeader.jsx'
+import RiskHeatmap from './RiskHeatmap.jsx'
 import { getUnidades } from '../lib/api.js'
 import {
   controlOptions,
   impactOptions,
   probabilityOptions,
-  residualOptions,
-  responseOptions,
   riskFormDefaults,
-  riskLevelOptions,
   riskTypeOptions,
-  statusOptions,
 } from '../constants/riskForm.js'
+import { levelFromPI, riskScore } from '../constants/riskScale.js'
 
 function SelectOptions({ options }) {
   return options.map((option) => <option key={option}>{option}</option>)
@@ -40,7 +39,42 @@ function RiskForm({
     handleSubmit,
     register,
     reset,
+    setValue,
+    watch,
   } = useForm({ defaultValues, mode: 'onBlur' })
+
+  const probability = watch('probability')
+  const impact = watch('impact')
+  const computedScore = riskScore(probability, impact)
+  const computedLevel = levelFromPI(probability, impact)
+
+  const probabilityResidual = watch('probabilityResidual')
+  const impactResidual = watch('impactResidual')
+  const residualScore = riskScore(probabilityResidual, impactResidual)
+  const residualLevel = levelFromPI(probabilityResidual, impactResidual)
+
+  const heatmapMarkers = []
+  if (computedScore) {
+    heatmapMarkers.push({ probability, impact, label: 'Inerente', kind: 'inerente' })
+  }
+  if (residualScore) {
+    heatmapMarkers.push({
+      probability: probabilityResidual,
+      impact: impactResidual,
+      label: 'Residual',
+      kind: 'residual',
+    })
+  }
+
+  // Níveis são derivados de Probabilidade x Impacto; mantém os campos no payload
+  // (o backend recalcula de qualquer forma).
+  useEffect(() => {
+    setValue('riskLevel', computedLevel)
+  }, [computedLevel, setValue])
+
+  useEffect(() => {
+    setValue('residualLevel', residualLevel)
+  }, [residualLevel, setValue])
 
   useEffect(() => {
     let ignore = false
@@ -179,7 +213,7 @@ function RiskForm({
           step="Etapa 2"
           title="Avaliação"
         >
-          <div className="form-grid five-columns">
+          <div className="form-grid four-columns">
             <FormField label="Probabilidade">
               <select {...register('probability')}>
                 <SelectOptions options={probabilityOptions} />
@@ -193,20 +227,16 @@ function RiskForm({
             </FormField>
 
             <FormField label="Nível de risco">
-              <select className="critical-select" {...register('riskLevel')}>
-                <SelectOptions options={riskLevelOptions} />
-              </select>
+              <div className="computed-level">
+                <LevelChip level={computedLevel} />
+                {computedScore ? <span className="computed-level-score">{computedScore}</span> : null}
+              </div>
+              <input type="hidden" {...register('riskLevel')} />
             </FormField>
 
             <FormField label="Controles internos">
               <select {...register('internalControls')}>
                 <SelectOptions options={controlOptions} />
-              </select>
-            </FormField>
-
-            <FormField label="Nível residual">
-              <select className="residual-select" {...register('residualLevel')}>
-                <SelectOptions options={residualOptions} />
               </select>
             </FormField>
           </div>
@@ -215,38 +245,42 @@ function RiskForm({
         <FormSection
           className="treatment-section"
           icon={ShieldCheck}
-          step="Etapa 3"
-          title="Tratamento"
+          step="Risco residual"
+          title="Reavaliação pós-tratamento"
         >
-          <div className="form-grid treatment-grid">
-            <FormField label="Resposta ao risco">
-              <select {...register('riskResponse')}>
-                <SelectOptions options={responseOptions} />
+          <p className="section-hint">
+            Preencha após a conclusão do tratamento: o nível residual é recalculado a partir
+            da nova probabilidade e impacto.
+          </p>
+          <div className="form-grid three-columns">
+            <FormField label="Probabilidade residual">
+              <select {...register('probabilityResidual')}>
+                <option value="">—</option>
+                <SelectOptions options={probabilityOptions} />
               </select>
             </FormField>
 
-            <FormField error={errors.actionPlan?.message} label="Plano de ação">
-              <input
-                aria-invalid={errors.actionPlan ? 'true' : 'false'}
-                placeholder="Ação imediata para contenção do risco..."
-                type="text"
-                {...register('actionPlan', { required: 'Informe o plano de ação.' })}
-              />
-            </FormField>
-
-            <FormField label="Data início">
-              <input type="date" {...register('startDate')} />
-            </FormField>
-
-            <FormField label="Data fim (previsão)">
-              <input type="date" {...register('dueDate')} />
-            </FormField>
-
-            <FormField label="Situação atual">
-              <select {...register('status')}>
-                <SelectOptions options={statusOptions} />
+            <FormField label="Impacto residual">
+              <select {...register('impactResidual')}>
+                <option value="">—</option>
+                <SelectOptions options={impactOptions} />
               </select>
             </FormField>
+
+            <FormField label="Nível residual">
+              <div className="computed-level">
+                <LevelChip level={residualLevel} />
+                {residualScore ? <span className="computed-level-score">{residualScore}</span> : null}
+              </div>
+              <input type="hidden" {...register('residualLevel')} />
+            </FormField>
+          </div>
+
+          <div className="risk-form-matrix">
+            <span className="section-hint">
+              Posição na matriz — ▣ inerente · ◯ residual
+            </span>
+            <RiskHeatmap markers={heatmapMarkers} />
           </div>
         </FormSection>
 
