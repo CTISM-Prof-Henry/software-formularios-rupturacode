@@ -7,10 +7,14 @@ import FilterBar from '../components/FilterBar.jsx'
 import LevelChip from '../components/LevelChip.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import { impactOptions, riskLevelOptions, riskTypeOptions } from '../constants/riskForm.js'
+import { useAuth } from '../hooks/useAuth.js'
+import { podeEditarRiscos } from '../lib/perms.js'
 import { deleteRisco, getRiscos } from '../lib/api.js'
 
 function RiskList() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const podeEditar = podeEditarRiscos(user)
   const [riscos, setRiscos] = useState([])
   const [status, setStatus] = useState('loading')
   const [busca, setBusca] = useState('')
@@ -82,10 +86,12 @@ function RiskList() {
     >
       <PageHeader
         actions={
-          <button className="primary-button" onClick={() => navigate('/riscos/novo')} type="button">
-            <Plus size={16} />
-            Novo Risco
-          </button>
+          podeEditar ? (
+            <button className="primary-button" onClick={() => navigate('/riscos/novo')} type="button">
+              <Plus size={16} />
+              Novo Risco
+            </button>
+          ) : null
         }
         description="Consulte, filtre e edite os riscos institucionais cadastrados."
         kicker="Gestão de riscos"
@@ -159,22 +165,28 @@ function RiskList() {
                     </button>
                   </td>
                   <td className="col-action">
-                    <button
-                      aria-label={`Editar ${risco.nome || risco.descricao}`}
-                      className="icon-button"
-                      onClick={() => navigate(`/riscos/${risco.id}/editar`)}
-                      type="button"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      aria-label={`Remover ${risco.nome || risco.descricao}`}
-                      className="icon-button"
-                      onClick={() => handleDelete(risco)}
-                      type="button"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {podeEditar ? (
+                      <>
+                        <button
+                          aria-label={`Editar ${risco.nome || risco.descricao}`}
+                          className="icon-button"
+                          onClick={() => navigate(`/riscos/${risco.id}/editar`)}
+                          type="button"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          aria-label={`Remover ${risco.nome || risco.descricao}`}
+                          className="icon-button"
+                          onClick={() => handleDelete(risco)}
+                          type="button"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      '—'
+                    )}
                   </td>
                 </tr>
               ))}

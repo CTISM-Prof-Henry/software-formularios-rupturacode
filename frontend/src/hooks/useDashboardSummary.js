@@ -23,6 +23,7 @@ export function useDashboardSummary() {
             totalRiscos: data.totalRiscos ?? 0,
             distribuicaoPorNivel:
               data.distribuicaoPorNivel ?? fallbackSummary.distribuicaoPorNivel,
+            mapaDeRisco: data.mapaDeRisco ?? fallbackSummary.mapaDeRisco,
           })
           setStatus('loaded')
         }

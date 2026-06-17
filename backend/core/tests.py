@@ -70,6 +70,22 @@ class DashboardTests(TestCase):
         self.assertEqual(data["riscosComTratamento"], 1)
         self.assertEqual(data["novosRiscos"], 2)
 
+    def test_dashboard_mapa_de_risco(self):
+        # Eixos na escala canônica (probabilidade x impacto -> 1-5).
+        self.criar_risco(nome="R1", probabilidade="Média", impacto="Grande")
+        self.criar_risco(nome="R2", probabilidade="Média", impacto="Grande")
+        self.criar_risco(nome="R3", probabilidade="Alta", impacto="Catastrófico")
+        # Fora da escala: não entra no mapa.
+        self.criar_risco(nome="R4", probabilidade="?", impacto="?")
+
+        data = self.client.get(reverse("api_dashboard_summary")).json()
+        mapa = {(c["probabilidade"], c["impacto"]): c["total"] for c in data["mapaDeRisco"]}
+
+        self.assertEqual(mapa.get((3, 4)), 2)
+        self.assertEqual(mapa.get((4, 5)), 1)
+        self.assertNotIn((0, 0), mapa)
+        self.assertEqual(sum(mapa.values()), 3)
+
     def test_dashboard_ignora_riscos_antigos_em_recentes(self):
         risco = self.criar_risco(nome="Risco Antigo")
         Risco.objects.filter(id=risco.id).update(

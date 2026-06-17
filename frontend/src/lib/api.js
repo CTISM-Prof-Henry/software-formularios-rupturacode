@@ -109,6 +109,11 @@ export function getUnidades(params) {
   return request(`/api/subunidades/${buildQuery(params)}`)
 }
 
+// Cargos ---------------------------------------------------------------------
+export function getCargos() {
+  return request('/api/cargos/')
+}
+
 // Auth -----------------------------------------------------------------------
 export function login(payload) {
   return request('/api/auth/login/', { body: JSON.stringify(payload), method: 'POST' })

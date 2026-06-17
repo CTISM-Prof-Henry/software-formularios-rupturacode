@@ -7,6 +7,7 @@ import FormFeedback from './FormFeedback.jsx'
 import FormField from './FormField.jsx'
 import FormSection from './FormSection.jsx'
 import PageHeader from './PageHeader.jsx'
+import SearchableSelect from './SearchableSelect.jsx'
 import { getUsuarios } from '../lib/api.js'
 import {
   responseOptions,
@@ -30,10 +31,12 @@ function TreatmentForm({
     handleSubmit,
     register,
     reset,
+    setValue,
     watch,
   } = useForm({ defaultValues, mode: 'onBlur' })
 
   const resposta = watch('resposta')
+  const usuarioResponsavelId = watch('usuarioResponsavelId')
   const isAceitar = resposta === 'aceitar'
 
   useEffect(() => {
@@ -53,6 +56,14 @@ function TreatmentForm({
       ignore = true
     }
   }, [])
+
+  // Responsável é um select de opções assíncronas: re-aplica o valor salvo quando
+  // a lista de usuários chega (senão o campo aparece vazio na edição).
+  useEffect(() => {
+    if (usuarios.length && defaultValues.usuarioResponsavelId) {
+      setValue('usuarioResponsavelId', defaultValues.usuarioResponsavelId)
+    }
+  }, [usuarios, defaultValues.usuarioResponsavelId, setValue])
 
   async function handleFormSubmit(data) {
     setSubmitFeedback(null)
@@ -136,14 +147,14 @@ function TreatmentForm({
             </FormField>
 
             <FormField label="Responsável">
-              <select {...register('usuarioResponsavelId')}>
-                <option value="">Selecione o responsável</option>
-                {usuarios.map((u) => (
-                  <option key={u.id} value={u.id}>
-                    {u.nome}
-                  </option>
-                ))}
-              </select>
+              <input type="hidden" {...register('usuarioResponsavelId')} />
+              <SearchableSelect
+                options={usuarios.map((u) => ({ value: String(u.id), label: u.nome }))}
+                onChange={(value) => setValue('usuarioResponsavelId', value, { shouldDirty: true })}
+                placeholder="Selecione o responsável"
+                searchPlaceholder="Pesquisar responsável"
+                value={usuarioResponsavelId}
+              />
             </FormField>
           </div>
 

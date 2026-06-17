@@ -9,18 +9,26 @@ import {
 } from 'lucide-react'
 import { NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth.js'
+import { podeEditarRiscos, podeGerirUsuarios } from '../lib/perms.js'
 
+// requer: nivel minimo p/ ver o item (undefined = qualquer logado).
 const navItems = [
   { label: 'Dashboard', to: '/dashboard', icon: LayoutDashboard },
   { label: 'Riscos', to: '/riscos', icon: FileText },
-  { label: 'Novo risco', to: '/riscos/novo', icon: PlusCircle },
+  { label: 'Novo risco', to: '/riscos/novo', icon: PlusCircle, requer: 'editor' },
   { label: 'Meus tratamentos', to: '/meus-tratamentos', icon: ListChecks },
-  { label: 'Usuarios', to: '/usuarios', icon: Users },
+  { label: 'Usuarios', to: '/usuarios', icon: Users, requer: 'admin' },
 ]
 
 function Sidebar() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
+
+  const itensVisiveis = navItems.filter((item) => {
+    if (item.requer === 'admin') return podeGerirUsuarios(user)
+    if (item.requer === 'editor') return podeEditarRiscos(user)
+    return true
+  })
 
   async function handleLogout() {
     await logout()
@@ -40,7 +48,7 @@ function Sidebar() {
       </div>
 
       <nav className="sidebar-nav" aria-label="Menu lateral">
-        {navItems.map((item) => {
+        {itensVisiveis.map((item) => {
           const Icon = item.icon
 
           return (

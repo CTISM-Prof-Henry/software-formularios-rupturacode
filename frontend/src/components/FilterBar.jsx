@@ -1,4 +1,5 @@
 import { Filter, Search } from 'lucide-react'
+import SearchableSelect from './SearchableSelect.jsx'
 
 function FilterBar({ searchPlaceholder, searchValue, onSearchChange, selects = [], onFilter }) {
   return (
@@ -23,20 +24,15 @@ function FilterBar({ searchPlaceholder, searchValue, onSearchChange, selects = [
       </div>
 
       {selects.map((select) => (
-        <select
-          aria-label={select.label}
-          className="filter-select"
-          key={select.label}
-          onChange={(event) => select.onChange(event.target.value)}
-          value={select.value}
-        >
-          <option value="">{select.label}</option>
-          {select.options.map((option) => (
-            <option key={option} value={option}>
-              {option}
-            </option>
-          ))}
-        </select>
+        <div className="filter-select" key={select.label}>
+          <SearchableSelect
+            onChange={select.onChange}
+            options={select.options}
+            placeholder={select.label}
+            searchPlaceholder={`Pesquisar ${select.label.toLowerCase()}`}
+            value={select.value}
+          />
+        </div>
       ))}
 
       <button className="primary-button filter-submit" type="submit">

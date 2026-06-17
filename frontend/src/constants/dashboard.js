@@ -6,6 +6,7 @@ export const fallbackSummary = {
   riscosComTratamento: 0,
   novosRiscos: 0,
   distribuicaoPorNivel: { BAIXO: 0, MODERADO: 0, ALTO: 0, EXTREMO: 0 },
+  mapaDeRisco: [],
 }
 
 export const dashboardMetricConfig = [

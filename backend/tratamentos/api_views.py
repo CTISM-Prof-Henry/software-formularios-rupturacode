@@ -7,6 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from core.auth import login_required_session
+from core.permissions import exige_nivel
 from riscos.models import Risco
 from usuario.models import Usuario
 
@@ -129,6 +130,10 @@ def tratamentos_collection(request):
             {"results": [_treatment_to_dict(t) for t in tratamentos]}
         )
 
+    barrado = exige_nivel(request, "editor")
+    if barrado is not None:
+        return barrado
+
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except json.JSONDecodeError:
@@ -170,6 +175,10 @@ def tratamentos_detail(request, tratamento_id):
 
     if request.method == "GET":
         return JsonResponse(_treatment_to_dict(tratamento))
+
+    barrado = exige_nivel(request, "editor")
+    if barrado is not None:
+        return barrado
 
     if request.method == "DELETE":
         tratamento.ativo = False

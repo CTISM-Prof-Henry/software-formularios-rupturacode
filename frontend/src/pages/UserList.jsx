@@ -7,14 +7,19 @@ import FilterBar from '../components/FilterBar.jsx'
 import PageHeader from '../components/PageHeader.jsx'
 import StatusChip from '../components/StatusChip.jsx'
 import { useCentros } from '../hooks/useCentros.js'
-import { cargoOptions } from '../constants/userForm.js'
+import { useCargos } from '../hooks/useCargos.js'
+import { useAuth } from '../hooks/useAuth.js'
+import { podeGerirUsuarios } from '../lib/perms.js'
 import { deleteUsuario, getUsuarios } from '../lib/api.js'
 
 function UserList() {
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const podeGerir = podeGerirUsuarios(user)
   const [usuarios, setUsuarios] = useState([])
   const [status, setStatus] = useState('loading')
   const centros = useCentros()
+  const cargos = useCargos()
   const [busca, setBusca] = useState('')
   const [cargo, setCargo] = useState('')
   const [centro, setCentro] = useState('')
@@ -70,10 +75,12 @@ function UserList() {
     >
       <PageHeader
         actions={
-          <button className="primary-button" onClick={() => navigate('/usuarios/novo')} type="button">
-            <Plus size={16} />
-            Novo Usuario
-          </button>
+          podeGerir ? (
+            <button className="primary-button" onClick={() => navigate('/usuarios/novo')} type="button">
+              <Plus size={16} />
+              Novo Usuario
+            </button>
+          ) : null
         }
         description="Gerencie os usuários e funcionários cadastrados no sistema."
         kicker="Gestão de usuários"
@@ -88,7 +95,12 @@ function UserList() {
           searchPlaceholder="Buscar Usuario..."
           searchValue={busca}
           selects={[
-            { label: 'Cargo do Usuario', value: cargo, onChange: setCargo, options: cargoOptions },
+            {
+              label: 'Cargo do Usuario',
+              value: cargo,
+              onChange: setCargo,
+              options: cargos.map((c) => c.value),
+            },
             {
               label: 'Centro',
               value: centro,
@@ -129,22 +141,28 @@ function UserList() {
                   <td>{usuario.cargo}</td>
                   <td><StatusChip active={usuario.ativo} /></td>
                   <td className="col-action">
-                    <button
-                      aria-label={`Editar ${usuario.nome}`}
-                      className="icon-button"
-                      onClick={() => navigate(`/usuarios/${usuario.id}/editar`)}
-                      type="button"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      aria-label={`Remover ${usuario.nome}`}
-                      className="icon-button"
-                      onClick={() => handleDelete(usuario)}
-                      type="button"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {podeGerir ? (
+                      <>
+                        <button
+                          aria-label={`Editar ${usuario.nome}`}
+                          className="icon-button"
+                          onClick={() => navigate(`/usuarios/${usuario.id}/editar`)}
+                          type="button"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          aria-label={`Remover ${usuario.nome}`}
+                          className="icon-button"
+                          onClick={() => handleDelete(usuario)}
+                          type="button"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      '—'
+                    )}
                   </td>
                 </tr>
               ))}

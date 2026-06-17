@@ -5,6 +5,7 @@ from django.utils import timezone
 from django.views.decorators.http import require_GET
 
 from riscos.models import Risco
+from riscos.scoring import IMPACTO_ESCALA, PROBABILIDADE_ESCALA, _to_valor
 from tratamentos.models import Tratamento
 
 from .auth import login_required_session
@@ -36,6 +37,20 @@ def _distribuicao_por_nivel(riscos_ativos):
     return distribuicao
 
 
+def _mapa_de_risco(riscos_ativos):
+    """Contagem de riscos ativos por célula probabilidade x impacto (eixos 1-5)."""
+    contagem = {}
+    for prob, imp in riscos_ativos.values_list("probabilidade", "impacto"):
+        p = _to_valor(prob, PROBABILIDADE_ESCALA)
+        i = _to_valor(imp, IMPACTO_ESCALA)
+        if p and i:
+            contagem[(p, i)] = contagem.get((p, i), 0) + 1
+    return [
+        {"probabilidade": p, "impacto": i, "total": total}
+        for (p, i), total in sorted(contagem.items())
+    ]
+
+
 @login_required_session
 @require_GET
 def dashboard_summary(request):
@@ -56,6 +71,7 @@ def dashboard_summary(request):
         "riscosComTratamento": tratamentos.values("risco_id").distinct().count(),
         "novosRiscos": riscos_ativos.filter(data_criacao__gte=recent_cutoff).count(),
         "distribuicaoPorNivel": _distribuicao_por_nivel(riscos_ativos),
+        "mapaDeRisco": _mapa_de_risco(riscos_ativos),
     }
 
     return JsonResponse(data)

@@ -115,6 +115,58 @@ function buildMarkerSeries(markers) {
   ]
 }
 
+function toHeatmapCoordinate(raw) {
+  const value = Number(raw)
+  return Number.isInteger(value) && value >= 1 && value <= 5 ? value - 1 : null
+}
+
+// Bolhas dinamicas: numero de riscos cadastrados em cada celula.
+function buildDistributionSeries(distribution) {
+  const points = (distribution || [])
+    .map((cell) => {
+      const probability = toHeatmapCoordinate(cell.probabilidade)
+      const impact = toHeatmapCoordinate(cell.impacto)
+      const total = Number(cell.total)
+
+      if (probability === null || impact === null || !Number.isFinite(total) || total <= 0) {
+        return null
+      }
+
+      return {
+        value: [probability, impact],
+        total,
+      }
+    })
+    .filter(Boolean)
+  if (points.length === 0) {
+    return []
+  }
+  return [
+    {
+      type: 'scatter',
+      data: points,
+      symbol: 'circle',
+      symbolSize: 30,
+      itemStyle: {
+        color: 'rgba(15,23,42,0.85)',
+        borderColor: '#ffffff',
+        borderWidth: 2,
+      },
+      label: {
+        show: true,
+        color: '#ffffff',
+        fontSize: 13,
+        fontWeight: 700,
+        formatter: ({ data }) => data.total,
+      },
+      tooltip: {
+        formatter: ({ data }) => `${data.total} risco(s) cadastrado(s)`,
+      },
+      z: 6,
+    },
+  ]
+}
+
 const option = {
   animation: false,
   tooltip: {
@@ -198,9 +250,10 @@ const option = {
   ],
 }
 
-function RiskHeatmap({ markers }) {
+function RiskHeatmap({ markers, distribution }) {
   const chartRef = useRef(null)
   const markersKey = JSON.stringify(markers || [])
+  const distributionKey = JSON.stringify(distribution || [])
 
   useEffect(() => {
     if (!chartRef.current) {
@@ -211,7 +264,11 @@ function RiskHeatmap({ markers }) {
     const chart = echarts.init(chartRef.current)
     chart.setOption({
       ...option,
-      series: [...option.series, ...buildMarkerSeries(markers)],
+      series: [
+        ...option.series,
+        ...buildDistributionSeries(distribution),
+        ...buildMarkerSeries(markers),
+      ],
     })
 
     const handleResize = () => chart.resize()
@@ -221,9 +278,9 @@ function RiskHeatmap({ markers }) {
       window.removeEventListener('resize', handleResize)
       chart.dispose()
     }
-    // markersKey serializa os marcadores para re-renderizar quando mudam.
+    // markersKey/distributionKey serializam os dados p/ re-renderizar quando mudam.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [markersKey])
+  }, [markersKey, distributionKey])
 
   return (
     <div className="risk-heatmap-layout">

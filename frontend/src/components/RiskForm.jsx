@@ -9,6 +9,7 @@ import FormSection from './FormSection.jsx'
 import LevelChip from './LevelChip.jsx'
 import PageHeader from './PageHeader.jsx'
 import RiskHeatmap from './RiskHeatmap.jsx'
+import SearchableSelect from './SearchableSelect.jsx'
 import { getUnidades } from '../lib/api.js'
 import {
   controlOptions,
@@ -21,6 +22,12 @@ import { levelFromPI, riskScore } from '../constants/riskScale.js'
 
 function SelectOptions({ options }) {
   return options.map((option) => <option key={option}>{option}</option>)
+}
+
+// Garante que o valor salvo (ex.: vocabulário legado fora da escala atual) apareça
+// como opção, senão o select cai no default e o campo fica "vazio" na edição.
+function withCurrent(options, current) {
+  return current && !options.includes(current) ? [current, ...options] : options
 }
 
 function RiskForm({
@@ -45,6 +52,7 @@ function RiskForm({
 
   const probability = watch('probability')
   const impact = watch('impact')
+  const department = watch('department')
   const computedScore = riskScore(probability, impact)
   const computedLevel = levelFromPI(probability, impact)
 
@@ -100,6 +108,14 @@ function RiskForm({
     currentDepartment && !unidades.some((u) => u.nome === currentDepartment)
       ? [{ id: 'atual', nome: currentDepartment }, ...unidades]
       : unidades
+
+  // Inclui o valor salvo como opção quando ele não está na lista padrão (dados legados).
+  const riskTypeOpts = withCurrent(riskTypeOptions, defaultValues.riskType)
+  const probabilityOpts = withCurrent(probabilityOptions, defaultValues.probability)
+  const impactOpts = withCurrent(impactOptions, defaultValues.impact)
+  const controlOpts = withCurrent(controlOptions, defaultValues.internalControls)
+  const probabilityResidualOpts = withCurrent(probabilityOptions, defaultValues.probabilityResidual)
+  const impactResidualOpts = withCurrent(impactOptions, defaultValues.impactResidual)
 
   async function handleFormSubmit(data) {
     setSubmitFeedback(null)
@@ -169,17 +185,23 @@ function RiskForm({
         >
           <div className="form-grid two-columns">
             <FormField error={errors.department?.message} label="Setor/Departamento">
-              <select
-                aria-invalid={errors.department ? 'true' : 'false'}
+              <input
+                type="hidden"
                 {...register('department', { required: 'Informe o setor ou departamento.' })}
-              >
-                <option value="">Selecione a unidade</option>
-                {departmentOptions.map((unidade) => (
-                  <option key={unidade.id} value={unidade.nome}>
-                    {unidade.nome}
-                  </option>
-                ))}
-              </select>
+              />
+              <SearchableSelect
+                ariaInvalid={Boolean(errors.department)}
+                options={departmentOptions.map((unidade) => ({
+                  value: unidade.nome,
+                  label: unidade.nome,
+                }))}
+                onChange={(value) =>
+                  setValue('department', value, { shouldDirty: true, shouldValidate: true })
+                }
+                placeholder="Selecione a unidade"
+                searchPlaceholder="Pesquisar unidade"
+                value={department}
+              />
             </FormField>
 
             <FormField error={errors.riskType?.message} label="Tipo de risco">
@@ -190,7 +212,7 @@ function RiskForm({
                 <option disabled value="">
                   Selecione o tipo de risco
                 </option>
-                <SelectOptions options={riskTypeOptions} />
+                <SelectOptions options={riskTypeOpts} />
               </select>
             </FormField>
           </div>
@@ -216,13 +238,13 @@ function RiskForm({
           <div className="form-grid four-columns">
             <FormField label="Probabilidade">
               <select {...register('probability')}>
-                <SelectOptions options={probabilityOptions} />
+                <SelectOptions options={probabilityOpts} />
               </select>
             </FormField>
 
             <FormField label="Impacto">
               <select {...register('impact')}>
-                <SelectOptions options={impactOptions} />
+                <SelectOptions options={impactOpts} />
               </select>
             </FormField>
 
@@ -236,7 +258,7 @@ function RiskForm({
 
             <FormField label="Controles internos">
               <select {...register('internalControls')}>
-                <SelectOptions options={controlOptions} />
+                <SelectOptions options={controlOpts} />
               </select>
             </FormField>
           </div>
@@ -256,14 +278,14 @@ function RiskForm({
             <FormField label="Probabilidade residual">
               <select {...register('probabilityResidual')}>
                 <option value="">—</option>
-                <SelectOptions options={probabilityOptions} />
+                <SelectOptions options={probabilityResidualOpts} />
               </select>
             </FormField>
 
             <FormField label="Impacto residual">
               <select {...register('impactResidual')}>
                 <option value="">—</option>
-                <SelectOptions options={impactOptions} />
+                <SelectOptions options={impactResidualOpts} />
               </select>
             </FormField>
 

@@ -8,11 +8,11 @@ function FieldError({ message }) {
 
 function FormField({ children, error, label }) {
   return (
-    <label>
+    <div className="form-field">
       <span>{label}</span>
       {children}
       <FieldError message={error} />
-    </label>
+    </div>
   )
 }
 

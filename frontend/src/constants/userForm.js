@@ -1,13 +1,4 @@
-// Centros e departamentos vêm da API (app subunidade / unidades UFSM).
-export const cargoOptions = [
-  'Coordenador',
-  'Diretor',
-  'Analista',
-  'Técnico',
-  'Professor',
-  'Servidor',
-]
-
+// Centros/departamentos vêm da API (app subunidade); cargos vêm de /api/cargos/ (useCargos).
 export const userFormDefaults = {
   nome: '',
   email: '',

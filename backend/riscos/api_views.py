@@ -5,6 +5,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods
 
 from core.auth import login_required_session
+from core.permissions import exige_nivel
 
 from .models import Risco
 from .scoring import nivel_de_risco, score as risk_score
@@ -99,6 +100,10 @@ def riscos_collection(request):
         riscos = Risco.objects.filter(ativo=True).order_by("-data_criacao")
         return JsonResponse({"results": [_risk_to_dict(risco) for risco in riscos]})
 
+    barrado = exige_nivel(request, "editor")
+    if barrado is not None:
+        return barrado
+
     try:
         payload = json.loads(request.body.decode("utf-8") or "{}")
     except json.JSONDecodeError:
@@ -125,6 +130,10 @@ def riscos_detail(request, risco_id):
 
     if request.method == "GET":
         return JsonResponse(_risk_to_dict(risco))
+
+    barrado = exige_nivel(request, "editor")
+    if barrado is not None:
+        return barrado
 
     if request.method == "DELETE":
         risco.ativo = False

@@ -101,7 +101,7 @@ function Dashboard({ onNewRisk }) {
             </div>
           </div>
 
-          <RiskHeatmap />
+          <RiskHeatmap distribution={summary.mapaDeRisco} />
         </motion.article>
       </section>
     </motion.main>

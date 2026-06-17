@@ -120,18 +120,38 @@ cd backend
 
 Endpoints sob `/api/` (respostas em camelCase; auth por sessão; soft delete via flag `ativo`):
 
-| Método              | Rota                                  | Descrição                          |
-|---------------------|---------------------------------------|------------------------------------|
-| GET                 | `/api/dashboard/`                     | Resumo do dashboard                |
-| GET / POST          | `/api/riscos/`                        | Listar / criar risco               |
-| GET / PUT / DELETE  | `/api/riscos/<id>/`                   | Detalhe / editar / desativar       |
-| GET / POST          | `/api/usuarios/`                      | Listar / criar usuário             |
-| GET / PUT / DELETE  | `/api/usuarios/<id>/`                 | Detalhe / editar / desativar       |
-| GET                 | `/api/subunidades/`                   | Unidades UFSM                      |
-| GET                 | `/api/subunidades/centros/`           | Centros (siglas)                   |
-| POST                | `/api/auth/login/` `/logout/`         | Login / logout                     |
-| GET                 | `/api/auth/me/`                       | Sessão atual                       |
-| POST                | `/api/auth/password-reset/{request,verify,confirm}/` | Reset de senha por código |
+| Método              | Rota                                  | Descrição                          | Nível mínimo |
+|---------------------|---------------------------------------|------------------------------------|--------------|
+| GET                 | `/api/dashboard/`                     | Resumo do dashboard                | leitor       |
+| GET                 | `/api/riscos/`                        | Listar risco                       | leitor       |
+| POST                | `/api/riscos/`                        | Criar risco                        | editor       |
+| GET                 | `/api/riscos/<id>/`                   | Detalhe                            | leitor       |
+| PUT / DELETE        | `/api/riscos/<id>/`                   | Editar / desativar                 | editor       |
+| GET                 | `/api/tratamentos/` `/<id>/`          | Listar / detalhe tratamento        | leitor       |
+| POST / PUT / DELETE | `/api/tratamentos/` `/<id>/`          | Criar / editar / desativar         | editor       |
+| GET                 | `/api/usuarios/` `/<id>/`             | Listar / detalhe usuário           | leitor       |
+| POST / PUT / DELETE | `/api/usuarios/` `/<id>/`             | Criar / editar / desativar         | admin        |
+| GET                 | `/api/cargos/`                        | Cargos canônicos + nível de cada   | leitor       |
+| GET                 | `/api/subunidades/`                   | Unidades UFSM                      | leitor       |
+| GET                 | `/api/subunidades/centros/`           | Centros (siglas)                   | leitor       |
+| POST                | `/api/auth/login/` `/logout/`         | Login / logout                     | público      |
+| GET                 | `/api/auth/me/`                       | Sessão atual (inclui `nivel`)      | autenticado  |
+| POST                | `/api/auth/password-reset/{request,verify,confirm}/` | Reset de senha por código | público |
+
+### Cargos e permissões
+
+`Usuario.cargo` é um conjunto fechado (`choices`, fonte da verdade em `core/permissions.py`). Cada
+cargo mapeia para um **nível** de acesso; o nível efetivo é `admin` quando `is_admin` (override
+manual) ou o nível do cargo:
+
+| Cargo | Nível | Permissões |
+|-------|-------|------------|
+| Diretor, Coordenador | **admin** | tudo + gestão de usuários |
+| Analista, Técnico | **editor** | leitura + criar/editar/excluir riscos e tratamentos |
+| Professor, Servidor | **leitor** | somente leitura (GET) |
+
+Aplicação em **duas camadas**: o backend bloqueia a API (decorator/checagem por nível) e o frontend
+esconde a UI conforme `user.nivel`. A defesa real é o backend.
 
 ## Diagramas
 

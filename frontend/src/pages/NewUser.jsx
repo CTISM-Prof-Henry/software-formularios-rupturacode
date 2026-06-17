@@ -8,14 +8,17 @@ import FormFeedback from '../components/FormFeedback.jsx'
 import FormField from '../components/FormField.jsx'
 import FormSection from '../components/FormSection.jsx'
 import PageHeader from '../components/PageHeader.jsx'
+import SearchableSelect from '../components/SearchableSelect.jsx'
 import { useCentros } from '../hooks/useCentros.js'
-import { cargoOptions, userFormDefaults } from '../constants/userForm.js'
+import { useCargos } from '../hooks/useCargos.js'
+import { userFormDefaults } from '../constants/userForm.js'
 import { createUsuario, getUnidades } from '../lib/api.js'
 
 function NewUser() {
   const navigate = useNavigate()
   const [feedback, setFeedback] = useState(null)
   const centros = useCentros()
+  const cargos = useCargos()
   const [unidades, setUnidades] = useState([])
   const {
     formState: { errors, isSubmitting },
@@ -27,6 +30,8 @@ function NewUser() {
   } = useForm({ defaultValues: userFormDefaults, mode: 'onBlur' })
 
   const centroSelecionado = watch('centro')
+  const departamentoSelecionado = watch('departamento')
+  const cargoSelecionado = watch('cargo')
 
   useEffect(() => {
     let ignore = false
@@ -118,14 +123,14 @@ function NewUser() {
             </FormField>
 
             <FormField error={errors.centro?.message} label="Centro">
-              <select {...register('centro')}>
-                <option value="">Selecione um Centro</option>
-                {centros.map((centro) => (
-                  <option key={centro.sigla} value={centro.sigla}>
-                    {centro.nome}
-                  </option>
-                ))}
-              </select>
+              <input type="hidden" {...register('centro')} />
+              <SearchableSelect
+                options={centros.map((centro) => ({ value: centro.sigla, label: centro.nome }))}
+                onChange={(value) => setValue('centro', value, { shouldDirty: true })}
+                placeholder="Selecione um Centro"
+                searchPlaceholder="Pesquisar centro"
+                value={centroSelecionado}
+              />
             </FormField>
 
             <FormField error={errors.email?.message} label="Email">
@@ -138,20 +143,27 @@ function NewUser() {
             </FormField>
 
             <FormField error={errors.departamento?.message} label="Departamento">
-              <select
-                aria-invalid={errors.departamento ? 'true' : 'false'}
+              <input
+                type="hidden"
                 disabled={!centroSelecionado}
                 {...register('departamento', { required: 'Selecione o departamento.' })}
-              >
-                <option value="">
-                  {centroSelecionado ? 'Selecione um departamento' : 'Selecione um centro primeiro'}
-                </option>
-                {unidadesDisponiveis.map((unidade) => (
-                  <option key={unidade.id} value={unidade.nome}>
-                    {unidade.nome}
-                  </option>
-                ))}
-              </select>
+              />
+              <SearchableSelect
+                ariaInvalid={Boolean(errors.departamento)}
+                disabled={!centroSelecionado}
+                options={unidadesDisponiveis.map((unidade) => ({
+                  value: unidade.nome,
+                  label: unidade.nome,
+                }))}
+                onChange={(value) =>
+                  setValue('departamento', value, { shouldDirty: true, shouldValidate: true })
+                }
+                placeholder={
+                  centroSelecionado ? 'Selecione um departamento' : 'Selecione um centro primeiro'
+                }
+                searchPlaceholder="Pesquisar departamento"
+                value={departamentoSelecionado}
+              />
             </FormField>
 
             <FormField label="Telefone">
@@ -185,18 +197,15 @@ function NewUser() {
         >
           <div className="form-grid two-columns">
             <FormField error={errors.cargo?.message} label="Informe o cargo do usuário">
-              <input
-                aria-invalid={errors.cargo ? 'true' : 'false'}
-                list="cargo-options"
-                placeholder="coordenador"
-                type="text"
-                {...register('cargo', { required: 'Informe o cargo.' })}
+              <input type="hidden" {...register('cargo', { required: 'Informe o cargo.' })} />
+              <SearchableSelect
+                ariaInvalid={Boolean(errors.cargo)}
+                options={cargos.map((cargo) => ({ value: cargo.value, label: cargo.label }))}
+                onChange={(value) => setValue('cargo', value, { shouldDirty: true, shouldValidate: true })}
+                placeholder="Selecione o cargo"
+                searchPlaceholder="Pesquisar cargo"
+                value={cargoSelecionado}
               />
-              <datalist id="cargo-options">
-                {cargoOptions.map((option) => (
-                  <option key={option} value={option} />
-                ))}
-              </datalist>
             </FormField>
 
             <FormField error={errors.senha?.message} label="Senha inicial">

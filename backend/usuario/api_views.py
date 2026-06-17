@@ -9,6 +9,7 @@ from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_http_methods, require_GET, require_POST
 
 from core.auth import login_required_session
+from core.permissions import CARGO_CHOICES, CARGO_NIVEL, CARGOS_VALIDOS, exige_nivel, nivel_de
 
 from .models import Usuario
 
@@ -27,6 +28,7 @@ def _user_to_dict(usuario):
         "centro": usuario.centro,
         "departamento": usuario.departamento,
         "cargo": usuario.cargo,
+        "nivel": nivel_de(usuario),
         "dataNascimento": usuario.data_nascimento.isoformat() if usuario.data_nascimento else None,
         "isAdmin": usuario.is_admin,
         "ativo": usuario.ativo,
@@ -51,11 +53,15 @@ def _payload_to_user_fields(payload):
 
 def _validate_user(fields):
     required_fields = ["nome", "email", "matricula", "departamento", "cargo"]
-    return {
+    errors = {
         field: "Campo obrigatorio."
         for field in required_fields
         if not str(fields.get(field, "")).strip()
     }
+    cargo = str(fields.get("cargo", "")).strip()
+    if cargo and cargo not in CARGOS_VALIDOS:
+        errors["cargo"] = "Cargo invalido."
+    return errors
 
 
 def _parse_body(request):
@@ -81,6 +87,10 @@ def usuarios_collection(request):
                 usuarios = usuarios.filter(**{f"{field}__iexact": value})
 
         return JsonResponse({"results": [_user_to_dict(usuario) for usuario in usuarios]})
+
+    barrado = exige_nivel(request, "admin")
+    if barrado is not None:
+        return barrado
 
     payload, error = _parse_body(request)
     if error:
@@ -121,6 +131,10 @@ def usuarios_detail(request, usuario_id):
     if request.method == "GET":
         return JsonResponse(_user_to_dict(usuario))
 
+    barrado = exige_nivel(request, "admin")
+    if barrado is not None:
+        return barrado
+
     if request.method == "DELETE":
         usuario.ativo = False
         usuario.save(update_fields=["ativo", "data_atualizacao"])
@@ -146,6 +160,20 @@ def usuarios_detail(request, usuario_id):
 
     usuario.save()
     return JsonResponse(_user_to_dict(usuario))
+
+
+@login_required_session
+@require_GET
+def cargos_list(request):
+    """Conjunto canonico de cargos + nivel de acesso de cada um."""
+    return JsonResponse(
+        {
+            "results": [
+                {"value": valor, "label": rotulo, "nivel": CARGO_NIVEL[valor]}
+                for valor, rotulo in CARGO_CHOICES
+            ]
+        }
+    )
 
 
 # ---------------------------------------------------------------------------

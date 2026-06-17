@@ -104,15 +104,18 @@ class UsuarioApiTests(TestCase):
     def _post(self, url, payload):
         return self.client.post(url, data=json.dumps(payload), content_type="application/json")
 
-    def _autenticar(self):
-        # Endpoints de usuarios exigem sessao.
-        usuario = Usuario.objects.create(
-            nome="Auth", email="auth_api@atlas.com", matricula="9001",
-            departamento="TI", cargo="Analista",
-        )
+    def _autenticar(self, **kwargs):
+        # Gestao de usuarios exige nivel admin; default = admin via is_admin.
+        dados = {
+            "nome": "Auth", "email": "auth_api@atlas.com", "matricula": "9001",
+            "departamento": "TI", "cargo": "Analista", "is_admin": True,
+        }
+        dados.update(kwargs)
+        usuario = Usuario.objects.create(**dados)
         session = self.client.session
         session["usuario_id"] = usuario.id
         session.save()
+        return usuario
 
     def test_criar_usuario_via_api(self):
         self._autenticar()
@@ -137,6 +140,75 @@ class UsuarioApiTests(TestCase):
         response = self._post(reverse("api_usuarios_collection"), {"nome": "X"})
         self.assertEqual(response.status_code, 400)
         self.assertIn("email", response.json()["errors"])
+
+    def test_criar_usuario_cargo_invalido(self):
+        self._autenticar()
+        response = self._post(
+            reverse("api_usuarios_collection"),
+            {
+                "nome": "Joao", "email": "j2@atlas.com", "matricula": "778",
+                "departamento": "TI", "cargo": "Faxineiro", "senha": "x",
+            },
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn("cargo", response.json()["errors"])
+
+    def test_me_inclui_nivel(self):
+        # Cargo mapeia p/ nivel; is_admin sobrepoe para admin.
+        Usuario.objects.create(
+            nome="Prof", email="prof@atlas.com", matricula="500",
+            departamento="TI", cargo="Professor", senha=make_password("1234"),
+        )
+        self._post(reverse("api_auth_login"), {"email": "prof@atlas.com", "senha": "1234"})
+        self.assertEqual(self.client.get(reverse("api_auth_me")).json()["nivel"], "leitor")
+
+    def test_gestao_usuarios_exige_admin(self):
+        # Editor (cargo Analista, sem is_admin) nao pode criar usuarios.
+        self._autenticar(cargo="Analista", is_admin=False)
+        response = self._post(
+            reverse("api_usuarios_collection"),
+            {
+                "nome": "Joao", "email": "j3@atlas.com", "matricula": "779",
+                "departamento": "TI", "cargo": "Analista", "senha": "x",
+            },
+        )
+        self.assertEqual(response.status_code, 403)
+
+
+class CargoPermissaoApiTests(TestCase):
+    def _post(self, url, payload):
+        return self.client.post(url, data=json.dumps(payload), content_type="application/json")
+
+    def _login_como(self, cargo, is_admin=False):
+        usuario = Usuario.objects.create(
+            nome=cargo, email=f"{cargo}@atlas.com", matricula=f"m{cargo}",
+            departamento="TI", cargo=cargo, is_admin=is_admin,
+        )
+        session = self.client.session
+        session["usuario_id"] = usuario.id
+        session.save()
+
+    def test_leitor_nao_cria_risco(self):
+        from riscos.test_helpers import dados_risco_padrao
+
+        self._login_como("Professor")  # leitor
+        response = self._post(reverse("api_riscos_collection"), dados_risco_padrao())
+        self.assertEqual(response.status_code, 403)
+
+    def test_editor_cria_risco(self):
+        from riscos.test_helpers import dados_risco_padrao
+
+        self._login_como("Analista")  # editor
+        response = self._post(reverse("api_riscos_collection"), dados_risco_padrao())
+        self.assertEqual(response.status_code, 201)
+
+    def test_cargos_list_traz_nivel(self):
+        self._login_como("Diretor", is_admin=True)
+        data = self.client.get(reverse("api_cargos_list")).json()
+        niveis = {c["value"]: c["nivel"] for c in data["results"]}
+        self.assertEqual(niveis["Diretor"], "admin")
+        self.assertEqual(niveis["Analista"], "editor")
+        self.assertEqual(niveis["Professor"], "leitor")
 
     def test_login_e_me(self):
         Usuario.objects.create(

@@ -6,6 +6,8 @@ import { pageVariants } from '../animations/pageAnimations.js'
 import PageHeader from '../components/PageHeader.jsx'
 import TreatmentStatusBadge from '../components/TreatmentStatusBadge.jsx'
 import { responseLabel } from '../constants/treatmentForm.js'
+import { useAuth } from '../hooks/useAuth.js'
+import { podeEditarRiscos } from '../lib/perms.js'
 import { deleteTratamento, getRisco, getTratamentos } from '../lib/api.js'
 
 function formatDate(value) {
@@ -19,6 +21,8 @@ function formatDate(value) {
 function TreatmentList() {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { user } = useAuth()
+  const podeEditar = podeEditarRiscos(user)
   const [risco, setRisco] = useState(null)
   const [tratamentos, setTratamentos] = useState([])
   const [status, setStatus] = useState('loading')
@@ -77,14 +81,16 @@ function TreatmentList() {
               <ArrowLeft size={16} />
               Voltar
             </button>
-            <button
-              className="primary-button"
-              onClick={() => navigate(`/riscos/${id}/tratamentos/novo`)}
-              type="button"
-            >
-              <Plus size={16} />
-              Novo Tratamento
-            </button>
+            {podeEditar && (
+              <button
+                className="primary-button"
+                onClick={() => navigate(`/riscos/${id}/tratamentos/novo`)}
+                type="button"
+              >
+                <Plus size={16} />
+                Novo Tratamento
+              </button>
+            )}
           </>
         }
         description={tituloRisco ? `Tratamentos do risco: ${tituloRisco}` : 'Tratamentos do risco.'}
@@ -130,22 +136,28 @@ function TreatmentList() {
                     />
                   </td>
                   <td className="col-action">
-                    <button
-                      aria-label="Editar tratamento"
-                      className="icon-button"
-                      onClick={() => navigate(`/tratamentos/${tratamento.id}/editar`)}
-                      type="button"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      aria-label="Remover tratamento"
-                      className="icon-button"
-                      onClick={() => handleDelete(tratamento.id)}
-                      type="button"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                    {podeEditar ? (
+                      <>
+                        <button
+                          aria-label="Editar tratamento"
+                          className="icon-button"
+                          onClick={() => navigate(`/tratamentos/${tratamento.id}/editar`)}
+                          type="button"
+                        >
+                          <Pencil size={16} />
+                        </button>
+                        <button
+                          aria-label="Remover tratamento"
+                          className="icon-button"
+                          onClick={() => handleDelete(tratamento.id)}
+                          type="button"
+                        >
+                          <Trash2 size={16} />
+                        </button>
+                      </>
+                    ) : (
+                      '—'
+                    )}
                   </td>
                 </tr>
               ))}

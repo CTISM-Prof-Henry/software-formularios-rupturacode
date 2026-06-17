@@ -1,5 +1,7 @@
 from django.db import models
 
+from core.permissions import CARGO_CHOICES
+
 
 # Create your models here.
 class Usuario(models.Model):
@@ -10,7 +12,7 @@ class Usuario(models.Model):
     matricula = models.CharField(max_length=50, unique=True)
     centro = models.CharField(max_length=100, blank=True)
     departamento = models.CharField(max_length=100)
-    cargo = models.CharField(max_length=100)
+    cargo = models.CharField(max_length=100, choices=CARGO_CHOICES)
     data_nascimento = models.DateField(null=True, blank=True)
     senha = models.CharField(max_length=128)
     is_admin = models.BooleanField(default=False)
